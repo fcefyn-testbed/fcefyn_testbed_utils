@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DAEMON_SCRIPT="/home/franco/pi/pi-hil-testing-utils/scripts/arduino_daemon.py"
+DAEMON_SCRIPT="/home/laryc/testbed_fcefyn/pi-hil-testing-utils/scripts/arduino_daemon.py"
 ARDUINO_PORT="/dev/arduino-relay"
 
 echo "🚀 Starting Arduino Relay Daemon..."
