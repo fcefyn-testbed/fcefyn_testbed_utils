@@ -1,19 +1,27 @@
-# Arduino (CH340 directo al host)
-SUBSYSTEM=="tty", ENV{ID_PATH}=="pci-0000:00:14.0-usb-0:2:1.0", \
+# =============================================================================
+# FCEFYN Lab - Serial Device Rules for ThinkPad T430
+# =============================================================================
+
+# Arduino relay controller (FTDI con serial único)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A5069RR4", \
   SYMLINK+="arduino-relay", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
 
-# Router GL-MT300N-V2 (CH340 en hub TP-Link UH700, puerto 1.1.1)
-SUBSYSTEM=="tty", ENV{ID_PATH}=="pci-0000:00:14.0-usb-0:1.1.1:1.0", \
-  SYMLINK+="glinet-mango", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
-
-# Router Belkin RT3200 #1 (CP210x en hub TP-Link UH700, puerto 1.1.3)
+# Belkin RT3200 #1 (CP210x en hub, puerto 1.1.3)
 SUBSYSTEM=="tty", ENV{ID_PATH}=="pci-0000:00:14.0-usb-0:1.1.3:1.0", \
   SYMLINK+="belkin-rt3200-1", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
 
-# Router Belkin RT3200 #2 (CH340 en hub TP-Link UH700, puerto 1.1.4)
+# Belkin RT3200 #2 (CH340 en hub, puerto 1.1.4)
 SUBSYSTEM=="tty", ENV{ID_PATH}=="pci-0000:00:14.0-usb-0:1.1.4:1.0", \
   SYMLINK+="belkin-rt3200-2", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
 
-# Router Belkin RT3200 #3 (CP210x en hub TP-Link UH700, puerto 1.2)
+# Belkin RT3200 #3 (CP210x en hub, puerto 1.2)
 SUBSYSTEM=="tty", ENV{ID_PATH}=="pci-0000:00:14.0-usb-0:1.2:1.0", \
   SYMLINK+="belkin-rt3200-3", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+# OpenWrt One (FTDI con serial único - puede moverse a cualquier puerto)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="BG02Q8N1", \
+  SYMLINK+="openwrt-one", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
+
+# BananaPI R4-Pro (FTDI con serial único - puede moverse a cualquier puerto)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="BG02PW5K", \
+  SYMLINK+="bpi4pro", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
