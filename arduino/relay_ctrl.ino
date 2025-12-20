@@ -5,19 +5,19 @@
  *  Autor:    Franco Riba
  *
  *  Descripción:
- *    Control de un módulo de 6 relés mediante interfaz USB-Serial.
+ *    Control de un módulo de 8 relés mediante interfaz USB-Serial.
  *    Diseñado para pruebas automatizadas (HIL - Hardware-in-the-loop).
  *
  *  Hardware:
  *    - Arduino Nano (ATmega328P)
- *    - Módulo relé KY-019 de 6 canales
+ *    - Módulo relé KY-019 de 8 canales
  *    - Conexión por USB (baudrate 115200)
  *
  *  Pines por defecto:
- *    IN1..IN6 -> D2..D7
+ *    IN1..IN8 -> D2..D9
  *
  *  Comandos disponibles por Serial:
- *    ON n [n ...]      : enciende uno o varios relés (0..5)
+ *    ON n [n ...]      : enciende uno o varios relés (0..7)
  *    OFF n [n ...]     : apaga uno o varios relés
  *    TOGGLE n [n ...]  : alterna uno o varios relés
  *    PULSE n ms        : enciende el relé n durante ms milisegundos
@@ -37,8 +37,8 @@
 
 // Configuración
 constexpr bool RELAY_ACTIVE_LOW = true;        // true = activo-bajo, false = activo-alto
-constexpr uint8_t RELAY_COUNT   = 6;           // cantidad de canales soportados
-constexpr uint8_t RELAY_PINS[RELAY_COUNT] = {2, 3, 4, 5, 6, 7};
+constexpr uint8_t RELAY_COUNT   = 8;           // cantidad de canales soportados
+constexpr uint8_t RELAY_PINS[RELAY_COUNT] = {2, 3, 4, 5, 6, 7, 8, 9};
 
 enum RelayState : uint8_t { R_OFF = 0, R_ON = 1 };
 RelayState states[RELAY_COUNT];
@@ -89,7 +89,7 @@ void help() {
   Serial.println(F("  ON n [n ...] | OFF n [n ...] | TOGGLE n [n ...]"));
   Serial.println(F("  PULSE n ms"));
   Serial.println(F("  ALLON | ALLOFF | STATUS | HELP | ID"));
-  Serial.println(F("  n=0..5, ms=milisegundos (1..60000)"));
+  Serial.println(F("  n=0..7, ms=milisegundos (1..60000)"));
 }
 
 void setup() {
@@ -103,7 +103,7 @@ void setup() {
   // Estado inicial seguro: todo apagado
   allRelays(R_OFF);
 
-  Serial.println(F("OK RELAY-CTRL v1 (6ch) listo @115200"));
+  Serial.println(F("OK RELAY-CTRL v1 (8ch) listo @115200"));
   help();
 }
 
@@ -141,7 +141,7 @@ int toIntSafe(const String &s, bool &ok) {
  */
 void processMultiChannelCommand(const String &cmd, String rest) {
   if (rest.length() == 0) {
-    Serial.println(F("ERR se requieren canales (0..5). Ej: ON 0 1 3"));
+    Serial.println(F("ERR se requieren canales (0..7). Ej: ON 0 1 3"));
     return;
   }
 
@@ -205,7 +205,7 @@ void loop() {
       int ch = toIntSafe(rest.substring(0, sp), ok1);
       int ms = toIntSafe(rest.substring(sp + 1), ok2);
       if (!ok1 || !ok2 || ch < 0 || ch >= RELAY_COUNT || ms < 1 || ms > 60000) {
-        Serial.println(F("ERR args (n=0..5, ms=1..60000)"));
+        Serial.println(F("ERR args (n=0..7, ms=1..60000)"));
       } else {
         applyRelay(ch, R_ON);
         delay(ms);
@@ -227,7 +227,7 @@ void loop() {
     help();
 
   } else if (cmd == F("ID")) {
-    Serial.println(F("RELAY-CTRL v1 (6ch)"));
+    Serial.println(F("RELAY-CTRL v1 (8ch)"));
 
   } else {
     Serial.println(F("ERR comando desconocido (try HELP)"));

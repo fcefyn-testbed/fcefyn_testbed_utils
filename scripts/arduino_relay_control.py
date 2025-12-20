@@ -28,6 +28,8 @@ class RelayChannel(IntEnum):
     CHANNEL_3 = 3
     CHANNEL_4 = 4
     CHANNEL_5 = 5
+    CHANNEL_6 = 6
+    CHANNEL_7 = 7
 
 
 class ArduinoCommands:
@@ -266,8 +268,8 @@ class ArduinoRelayController:
         return False
 
     def _validate_channel(self, channel: int) -> None:
-        if not 0 <= channel <= 5:
-            raise ValueError(f"Invalid channel {channel}. Must be 0-5")
+        if not 0 <= channel <= 7:
+            raise ValueError(f"Invalid channel {channel}. Must be 0-7")
 
     def _validate_channels(self, channels: Iterable[int]) -> List[int]:
         ch_list = list(channels)
@@ -329,7 +331,7 @@ class ArduinoRelayController:
     def _parse_status_response(self, response: str) -> Dict[str, Any]:
         """
         Expected STATUS format (from Arduino):
-          STATUS 0:OFF 1:ON 2:OFF 3:OFF 4:ON 5:OFF
+          STATUS 0:OFF 1:ON 2:OFF 3:OFF 4:ON 5:OFF 6:OFF 7:ON
         """
         status_line = None
         for line in response.splitlines():
@@ -436,27 +438,27 @@ Exit Codes:
 
     # ON
     on_parser = subparsers.add_parser('on', help='Turn ON one or more channels')
-    on_parser.add_argument('channels', nargs='+', type=int, choices=range(6),
-                           help='Relay channels (0-5). Multiple allowed.')
+    on_parser.add_argument('channels', nargs='+', type=int, choices=range(8),
+                           help='Relay channels (0-7). Multiple allowed.')
     on_parser.add_argument('--glinet-sequence', action='store_true',
                            help='Use GL.iNet MT300N-v2 power sequence: disconnect serial (relay 1) before power on (relay 0), then reconnect serial after boot')
 
     # OFF
     off_parser = subparsers.add_parser('off', help='Turn OFF one or more channels')
-    off_parser.add_argument('channels', nargs='+', type=int, choices=range(6),
-                            help='Relay channels (0-5). Multiple allowed.')
+    off_parser.add_argument('channels', nargs='+', type=int, choices=range(8),
+                            help='Relay channels (0-7). Multiple allowed.')
     off_parser.add_argument('--glinet-sequence', action='store_true',
                             help='Use GL.iNet MT300N-v2 power off sequence: power off (relay 0) then reconnect serial (relay 1)')
 
     # TOGGLE
     tog_parser = subparsers.add_parser('toggle', help='Toggle one or more channels')
-    tog_parser.add_argument('channels', nargs='+', type=int, choices=range(6),
-                            help='Relay channels (0-5). Multiple allowed.')
+    tog_parser.add_argument('channels', nargs='+', type=int, choices=range(8),
+                            help='Relay channels (0-7). Multiple allowed.')
 
     # PULSE
     pulse_parser = subparsers.add_parser('pulse', help='Pulse a channel for ms')
-    pulse_parser.add_argument('channel', type=int, choices=range(6),
-                              help='Relay channel (0-5)')
+    pulse_parser.add_argument('channel', type=int, choices=range(8),
+                              help='Relay channel (0-7)')
     pulse_parser.add_argument('milliseconds', type=int,
                               help='Pulse width in milliseconds (1..60000)')
 
