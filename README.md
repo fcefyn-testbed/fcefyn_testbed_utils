@@ -883,6 +883,7 @@ When running multiple devices of the same model (e.g., three Belkin RT3200 route
 | Belkin RT3200 #2 | 200 | 6 | 200 | 192.168.200.1, 192.168.1.200 | 192.168.1.1 | /24 |
 | Belkin RT3200 #3 | 300 | 7 | 300 | 192.168.300.1, 192.168.1.300 | 192.168.1.1 | /24 |
 | GL.iNet MT300N-v2 | 400 | 8 | 400 | 192.168.400.1, 192.168.1.400 | 192.168.1.1 | /24 |
+| Openwrt One | 103 | 9 | 103 | 192.168.103.1, 192.168.1.1 | 192.168.1.1 | /24 |
 
 **Important:** Each server VLAN interface needs **TWO IP addresses**:
 - `192.168.X.1/24`: For TFTP/DHCP server communication
@@ -924,6 +925,7 @@ VLAN ID: 100, Name: testbed-belkin1
 VLAN ID: 200, Name: testbed-belkin2
 VLAN ID: 300, Name: testbed-belkin3
 VLAN ID: 400, Name: testbed-glinet
+VLAN ID:    , Name: openwrt-One
 ```
 
 **B. Configure Port Membership:**
