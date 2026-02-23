@@ -81,17 +81,45 @@ def run_poe_command(
 
     try:
         channel = client.invoke_shell()
-        channel.settimeout(10)
+        channel.settimeout(15)
 
-        def send_cmd(cmd: str) -> None:
-            channel.send(cmd + "\n")
+        def wait_for_prompt(timeout_sec: float = 10) -> bool:
+            """Read until we see a CLI prompt (# or >)."""
+            deadline = time.time() + timeout_sec
+            buf = ""
+            while time.time() < deadline:
+                if channel.recv_ready():
+                    data = channel.recv(1024).decode("utf-8", errors="replace")
+                    buf += data
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug(f"Recv: {repr(data)}")
+                    # SG2016P> or SG2016P(config-if)#
+                    if "#" in buf or ">" in buf:
+                        return True
+                else:
+                    time.sleep(0.1)
+            logger.warning(f"Prompt timeout. Last output: {buf[-200:] if buf else '(none)'}")
+            return False
+
+        def send_cmd(cmd: str, wait: bool = True) -> None:
+            channel.send(cmd + "\r\n")
             time.sleep(0.5)
+            if wait:
+                if not wait_for_prompt(timeout_sec=8):
+                    logger.warning(f"Prompt not seen after: {cmd}")
+                time.sleep(0.5)  # Extra settling time
+
+        # Wait for initial prompt; send newline to clear any "Press any key"
+        time.sleep(2)
+        channel.send("\r\n")
+        time.sleep(1)
+        wait_for_prompt(timeout_sec=8)
 
         for cmd in commands:
             logger.debug(f"Sending: {cmd}")
             send_cmd(cmd)
 
-        # Read output to clear buffer
+        # Extra wait for last command to complete
         time.sleep(1)
         while channel.recv_ready():
             channel.recv(4096)
