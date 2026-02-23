@@ -1,0 +1,11 @@
+# PoE Switch Control - Configuration
+# Copy to ~/.config/poe_switch_control.conf and set the password.
+# This file is NOT in git - dont commit credentials.
+#
+# cp configs/poe_switch_control.conf.example ~/.config/poe_switch_control.conf
+# chmod 600 ~/.config/poe_switch_control.conf
+# Edit and add your switch password.
+
+POE_SWITCH_PASSWORD=switch_password_here
+POE_SWITCH_HOST=switch_ip_here
+POE_SWITCH_USER=switch_user_here
