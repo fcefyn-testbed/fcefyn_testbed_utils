@@ -135,8 +135,10 @@ else
     print_success "PDUDaemon installed"
 fi
 
-# Step 5: Arduino Relay Control
-print_header "Step 5: Installing Arduino Relay Control Script"
+# Step 5: Arduino Relay Control and PoE Switch Control
+print_header "Step 5: Installing Power Control Scripts"
+
+pip install paramiko --quiet 2>/dev/null || pip3 install paramiko --quiet 2>/dev/null || true
 
 if [ -f "$REPO_DIR/scripts/arduino_relay_control.py" ]; then
     sudo cp "$REPO_DIR/scripts/arduino_relay_control.py" /usr/local/bin/
@@ -145,6 +147,12 @@ if [ -f "$REPO_DIR/scripts/arduino_relay_control.py" ]; then
 else
     print_error "arduino_relay_control.py not found in $REPO_DIR/scripts/"
     exit 1
+fi
+
+if [ -f "$REPO_DIR/scripts/poe_switch_control.py" ]; then
+    sudo cp "$REPO_DIR/scripts/poe_switch_control.py" /usr/local/bin/
+    sudo chmod +x /usr/local/bin/poe_switch_control.py
+    print_success "poe_switch_control.py installed to /usr/local/bin/"
 fi
 
 # Step 6: PDUDaemon Configuration
@@ -169,6 +177,11 @@ sudo tee /etc/pdudaemon/pdudaemon.conf > /dev/null << 'EOF'
             "driver": "localcmdline",
             "cmd_on": "/usr/local/bin/arduino_relay_control.py on %s --glinet-sequence",
             "cmd_off": "/usr/local/bin/arduino_relay_control.py off %s"
+        },
+        "fcefyn-poe-openwrt-one": {
+            "driver": "localcmdline",
+            "cmd_on": "/usr/local/bin/poe_switch_control.py on %s",
+            "cmd_off": "/usr/local/bin/poe_switch_control.py off %s"
         }
     }
 }

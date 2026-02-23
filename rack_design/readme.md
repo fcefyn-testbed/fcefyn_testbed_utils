@@ -12,7 +12,7 @@ To assemble the full rack, the following parts were printed using the provided S
 *   **1x Chimney End Cap (`chimney_duct_cover.stl`):** Seals the top of the chimney to force air through the vents.
 *   **8x Drawer Stops (`drawer_stop.stl`):** Custom heavy-duty stops to replace generic plastic ones.
 *   **3x Belkin RT3200 Base (`belkin_rt3200_base.stl`):** Custom bases for the routers to replace original bulky cases.
-*   **1x USB Hub Shelf (`hub_shelf_TP-LINK_UH700.stl`):** Shelf for the TP-Link UH700 USB hub.
+*   **1x USB Hub Shelf (`hub_shelf_TP-LINK_UH700.stl`):** Shelf for the USB hub. *(Actual: Nisuta NSUH113Q; el STL fue diseñado para TP-Link UH700 – verificar dimensiones.)*
 *   **1x Arduino Nano Holder (`NanoHolderA.stl`):** Mounting bracket for an Arduino Nano.
 *   **Decorative Logos (`logo fcefyn.stl`, `logo unc.stl`):** Final aesthetic details representing FCEFyN and UNC.
 
@@ -60,9 +60,6 @@ The original cases for the Belkin RT3200 routers were too large for the rack cha
 <img src="img/belkin_case_adapted.jpg" width="300">
 
 ### 6. Auxiliary and Decorative Parts
-*   **USB Hub Shelf (`hub_shelf_TP-LINK_UH700.stl`):** A custom shelf designed to securely house the TP-Link UH700 USB hub within the rack.
-
-<img src="img/hub_shelf.jpg" width="300">
 
 *   **Arduino Nano Holder (`NanoHolderA.stl`):** A small mounting bracket to keep the Arduino Nano fixed in its designated drawer level.
 

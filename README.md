@@ -27,6 +27,7 @@ pi-hil-testing-utils/
 │   └── qemu/
 └── scripts/             # Automation scripts
     ├── arduino_relay_control.py    # Relay control CLI
+    ├── poe_switch_control.py       # PoE port control (TP-Link SG2016P)
     ├── arduino_daemon.py            # Persistent relay daemon
     ├── setup_tftp_server.sh        # TFTP server setup
     ├── tftp_firmware_manage.sh     # Firmware management
@@ -259,6 +260,12 @@ arduino_relay_control.py --port /dev/ttyUSB0 on 1
 # GL.iNet MT300N-v2 special sequence (disconnect serial → power on → reconnect serial)
 arduino_relay_control.py on 0 --glinet-sequence
 arduino_relay_control.py off 0 --glinet-sequence
+
+# OpenWRT One (PoE on switch port 1) - requires POE_SWITCH_PASSWORD env var
+export POE_SWITCH_PASSWORD='switch_admin_password'
+poe_switch_control.py on 1
+poe_switch_control.py off 1
+poe_switch_control.py cycle 1
 ```
 
 **Note**: After installation to `/usr/local/bin/`, you can use `arduino_relay_control.py` directly without `python3` prefix, as it has a shebang (`#!/usr/bin/env python3`).
