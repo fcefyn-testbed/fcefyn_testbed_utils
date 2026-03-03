@@ -1,11 +1,23 @@
 # PoE Switch Control - Configuration
-# Copy to ~/.config/poe_switch_control.conf and set the password.
-# This file is NOT in git - dont commit credentials.
 #
-# cp configs/poe_switch_control.conf.example ~/.config/poe_switch_control.conf
-# chmod 600 ~/.config/poe_switch_control.conf
-# Edit and add your switch password.
+# Option A: Manual use (script run by your user)
+#   cp configs/poe_switch_control.conf.example ~/.config/poe_switch_control.conf
+#   chmod 600 ~/.config/poe_switch_control.conf
+#   Edit and add your switch password.
+#
+# Option B: PDUDaemon with Ansible (DynamicUser=yes)
+#   PDUDaemon cannot read ~/.config/ (ProtectHome). Use a systemd override instead:
+#   sudo mkdir -p /etc/systemd/system/pdudaemon.service.d
+#   sudo tee /etc/systemd/system/pdudaemon.service.d/poe-password.conf << 'EOF'
+#   [Service]
+#   Environment=POE_SWITCH_PASSWORD=your_password
+#   Environment=POE_SWITCH_HOST=<switch-ip>
+#   Environment=POE_SWITCH_USER=<switch-user>
+#   EOF
+#   sudo systemctl daemon-reload && sudo systemctl restart pdudaemon
+#
 
 POE_SWITCH_PASSWORD=switch_password_here
-POE_SWITCH_HOST=switch_ip_here
-POE_SWITCH_USER=switch_user_here
+POE_SWITCH_HOST=<switch-ip>
+POE_SWITCH_USER=<switch-user>
+# POE_CYCLE_DELAY=3   # Seconds between off and on during cycle (default: 3)
