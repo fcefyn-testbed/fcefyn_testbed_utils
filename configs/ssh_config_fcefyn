@@ -1,6 +1,8 @@
 #
-# Requires: labgrid-bound-connect installed and sudoers configured.
-# See host-config.md section 3.4 for details.
+# Requires: labgrid-dut-proxy installed and sudoers configured.
+# labgrid-dut-proxy selects vlan200 (mesh) or per-device vlan (isolated)
+# based on ~/.config/labgrid-vlan-mode (written by switch_vlan_preset.py).
+# See host-config.md section 3.6 for details.
 #
 # File: ~/.ssh/config
 #
@@ -18,44 +20,42 @@ Host labgrid-fcefyn
 
 Host dut-belkin-1
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan100 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy belkin-1 192.168.1.1 22
 
 Host dut-belkin-2
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan101 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy belkin-2 192.168.1.1 22
 
 Host dut-belkin-3
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan102 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy belkin-3 192.168.1.1 22
 
 Host dut-bananapi
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan103 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy bananapi 192.168.1.1 22
 
 Host dut-openwrt-one
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan104 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy openwrt-one 192.168.1.1 22
 
 Host dut-librerouter-1
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan105 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy librerouter-1 192.168.1.1 22
 
 Host dut-librerouter-2
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan106 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy librerouter-2 192.168.1.1 22
 
 Host dut-librerouter-3
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan107 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy librerouter-3 192.168.1.1 22
 
 Host dut-glinet-mango
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan108 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy glinet-mango 192.168.1.1 22
 
 Host switch-fcefyn
     HostName 192.168.0.1
     User admin
     PreferredAuthentications password
     PubkeyAuthentication no
-laryc@labgrid-fcefyn:~$
-
