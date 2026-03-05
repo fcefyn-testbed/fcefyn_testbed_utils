@@ -1,0 +1,6 @@
+# Local config with password - never commit
+configs/poe_switch_control.conf
+# JetBrains IDEs
+.idea/
+*.iml
+out/
