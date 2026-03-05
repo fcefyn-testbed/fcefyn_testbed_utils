@@ -1,0 +1,5 @@
+*.img filter=lfs diff=lfs merge=lfs -text
+*.img.gz filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.itb filter=lfs diff=lfs merge=lfs -text
+*.tar.gz filter=lfs diff=lfs merge=lfs -text
