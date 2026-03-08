@@ -9,10 +9,12 @@ Supports three testbed modes derived from pool-config.yaml:
   - hybrid:         DUTs split across both pools simultaneously
 
 Usage:
-  pool-manager.py --generate            # Print generated exporter configs (dry run)
-  pool-manager.py --apply               # Apply switch config + write exporter files
-  pool-manager.py --apply --no-switch   # Write exporter files only (skip switch SSH)
-  pool-manager.py --apply --force       # Always apply full config (ignore state file)
+  pool-manager.py --generate                    # Print generated configs (dry run)
+  pool-manager.py --apply                       # Apply switch + write exporter files
+  pool-manager.py --apply --deploy-local        # Also deploy to /etc/labgrid/ and restart
+  pool-manager.py --apply --no-switch           # Write exporter files only (skip switch)
+  pool-manager.py --apply --force               # Full switch apply (ignore state file)
+  pool-manager.py --apply --deploy-local --force  # Skip DUT-in-use safety check
 
 Differential apply: When re-applying hybrid config, only changed ports are configured.
 State is stored in ~/.config/labgrid-switch-state.yaml. Use --force to bypass.
@@ -20,11 +22,19 @@ State is stored in ~/.config/labgrid-switch-state.yaml. Use --force to bypass.
 Output exporter files are written next to pool-config.yaml as:
   exporter-libremesh.yaml
   exporter-openwrt.yaml  (only when openwrt pool is non-empty)
+
+With --deploy-local (hybrid mode):
+  - Writes exporter YAMLs to /etc/labgrid/
+  - Installs hybrid systemd units if missing
+  - Restarts labgrid-exporter-openwrt and labgrid-exporter-libremesh services
+  - Checks that DUTs changing pools are not reserved (skip with --force)
 """
 
 import argparse
 import logging
 import os
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -63,6 +73,29 @@ except ImportError:
 
 VLAN_MESH = 200
 TFTP_IP_MESH = "192.168.200.1"
+
+# Default SSH alias when ssh_alias not in pool-config
+DEFAULT_SSH_ALIAS: dict[str, str] = {
+    "belkin_rt3200_1": "belkin-1",
+    "belkin_rt3200_2": "belkin-2",
+    "belkin_rt3200_3": "belkin-3",
+    "bananapi_bpi-r4": "bananapi",
+    "openwrt_one": "openwrt-one",
+    "librerouter_1": "librerouter-1",
+    "librerouter_2": "librerouter-2",
+    "librerouter_3": "librerouter-3",
+}
+
+HYBRID_SERVICE_OPENWRT = "labgrid-exporter-openwrt"
+HYBRID_SERVICE_LIBREMESH = "labgrid-exporter-libremesh"
+SINGLE_SERVICE = "labgrid-exporter"
+
+EXPORTER_DIR = Path("/etc/labgrid")
+SYSTEMD_DIR = Path("/etc/systemd/system")
+
+POOL_STATE_PATH = Path(
+    os.path.expanduser("~/.config/labgrid-pool-state.yaml")
+)
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +217,34 @@ def generate_openwrt_exporter(dut_names: list[str], duts_db: dict) -> str:
         lines.append(f"    username: \"root\"")
         lines.append("")
 
+    return "\n".join(lines)
+
+
+def _ssh_alias_for_dut(dut_name: str, hw: dict) -> str:
+    """Get SSH alias for DUT. Prefer pool-config ssh_alias, else default mapping."""
+    return hw.get("ssh_alias") or DEFAULT_SSH_ALIAS.get(
+        dut_name,
+        dut_name.replace("_", "-"),
+    )
+
+
+def generate_dut_proxy_config(dut_names: list[str], duts_db: dict) -> str:
+    """Generate dut-proxy.yaml for labgrid-dut-proxy (SSH alias -> vlan/ip per mode)."""
+    lines = [
+        "# labgrid-dut-proxy device map. Generated from pool-config.",
+        "# device_id = SSH alias (e.g. belkin-1). Used by ProxyCommand in ~/.ssh/config.",
+        "",
+        "devices:",
+    ]
+    for dut_name in dut_names:
+        hw = duts_db[dut_name]
+        alias = _ssh_alias_for_dut(dut_name, hw)
+        vlan = hw["switch_vlan_isolated"]
+        fixed_ip = hw.get("libremesh_fixed_ip", "")
+        lines.append(f"  {alias}:")
+        lines.append(f"    isolated: {{ vlan: {vlan}, ip: \"192.168.1.1\" }}")
+        lines.append(f"    mesh: {{ vlan: {VLAN_MESH}, ip: \"{fixed_ip}\" }}")
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -418,6 +479,258 @@ def detect_mode(pools: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Pool state (track which DUTs belong to which pool for rebalance detection)
+# ---------------------------------------------------------------------------
+
+def load_pool_state() -> dict:
+    """Load last-applied pool assignments from state file."""
+    if not POOL_STATE_PATH.exists():
+        return {}
+    try:
+        with open(POOL_STATE_PATH) as f:
+            return yaml.safe_load(f) or {}
+    except Exception:
+        return {}
+
+
+def save_pool_state(openwrt_duts: list[str], libremesh_duts: list[str]) -> None:
+    POOL_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    state = {
+        "openwrt": sorted(openwrt_duts),
+        "libremesh": sorted(libremesh_duts),
+    }
+    with open(POOL_STATE_PATH, "w") as f:
+        yaml.dump(state, f, default_flow_style=False)
+
+
+def get_duts_changing_pool(
+    openwrt_duts: list[str],
+    libremesh_duts: list[str],
+) -> dict[str, tuple[str, str]]:
+    """
+    Return dict of DUTs that changed pool: {dut_name: (old_pool, new_pool)}.
+    old_pool/new_pool are 'openwrt', 'libremesh', or 'unassigned'.
+    """
+    prev = load_pool_state()
+    prev_ow = set(prev.get("openwrt", []))
+    prev_lm = set(prev.get("libremesh", []))
+    new_ow = set(openwrt_duts)
+    new_lm = set(libremesh_duts)
+
+    changes: dict[str, tuple[str, str]] = {}
+    all_duts = prev_ow | prev_lm | new_ow | new_lm
+    for dut in all_duts:
+        old = "openwrt" if dut in prev_ow else ("libremesh" if dut in prev_lm else "unassigned")
+        new = "openwrt" if dut in new_ow else ("libremesh" if dut in new_lm else "unassigned")
+        if old != new and old != "unassigned":
+            changes[dut] = (old, new)
+    return changes
+
+
+# ---------------------------------------------------------------------------
+# DUT-in-use safety check
+# ---------------------------------------------------------------------------
+
+def _query_coordinator_places(coordinator_url: str) -> dict[str, str]:
+    """
+    Query a labgrid coordinator for place acquisition status.
+    Returns {place_name: status} where status is 'acquired', 'reserved', etc.
+    Returns empty dict if coordinator is unreachable.
+    """
+    env = os.environ.copy()
+    if not coordinator_url.startswith("ws://"):
+        coordinator_url = f"ws://{coordinator_url}"
+    env["LG_COORDINATOR"] = coordinator_url
+
+    try:
+        result = subprocess.run(
+            ["labgrid-client", "places", "-v"],
+            capture_output=True, text=True, timeout=15, env=env,
+        )
+    except FileNotFoundError:
+        logger.warning("labgrid-client not found, cannot check place status")
+        return {}
+    except subprocess.TimeoutExpired:
+        logger.warning("Timeout querying coordinator %s", coordinator_url)
+        return {}
+
+    if result.returncode != 0:
+        logger.warning(
+            "labgrid-client places failed for %s: %s",
+            coordinator_url, result.stderr.strip(),
+        )
+        return {}
+
+    places: dict[str, str] = {}
+    current_place = None
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("Place '"):
+            current_place = stripped.split("'")[1]
+        elif current_place and "acquired:" in stripped.lower():
+            value = stripped.split(":", 1)[1].strip()
+            if value and value.lower() not in ("", "none"):
+                places[current_place] = "acquired"
+            current_place = None
+    return places
+
+
+def check_duts_in_use(
+    changing_duts: dict[str, tuple[str, str]],
+    coordinators: dict[str, str],
+) -> list[str]:
+    """
+    Check if any DUTs that are changing pool are currently in use.
+    Returns list of error messages (empty = all clear).
+    """
+    if not changing_duts:
+        return []
+
+    errors: list[str] = []
+    coord_places: dict[str, dict[str, str]] = {}
+
+    for pool_name, coord_url in coordinators.items():
+        duts_leaving_this_pool = [
+            dut for dut, (old, _new) in changing_duts.items() if old == pool_name
+        ]
+        if not duts_leaving_this_pool:
+            continue
+
+        if pool_name not in coord_places:
+            coord_places[pool_name] = _query_coordinator_places(coord_url)
+
+        acquired = coord_places[pool_name]
+        for dut in duts_leaving_this_pool:
+            place_name = f"labgrid-fcefyn-{dut}"
+            if place_name in acquired:
+                errors.append(
+                    f"DUT '{dut}' (place '{place_name}') is acquired on "
+                    f"coordinator {coord_url} — cannot move to another pool"
+                )
+    return errors
+
+
+# ---------------------------------------------------------------------------
+# Deploy local: write to /etc/labgrid and manage systemd services
+# ---------------------------------------------------------------------------
+
+def _install_hybrid_units() -> bool:
+    """Install hybrid exporter systemd units if not already present."""
+    units = {
+        f"{HYBRID_SERVICE_OPENWRT}.service": CONFIG_DIR / "labgrid-exporter-openwrt.service",
+        f"{HYBRID_SERVICE_LIBREMESH}.service": CONFIG_DIR / "labgrid-exporter-libremesh.service",
+    }
+    installed_any = False
+    for unit_name, source in units.items():
+        dest = SYSTEMD_DIR / unit_name
+        if dest.exists():
+            continue
+        if not source.exists():
+            logger.error("Hybrid unit source not found: %s", source)
+            return False
+        logger.info("Installing %s → %s", source, dest)
+        try:
+            shutil.copy2(source, dest)
+            installed_any = True
+        except PermissionError:
+            logger.error(
+                "Permission denied writing %s. Run with sudo or "
+                "install the units manually.", dest,
+            )
+            return False
+
+    if installed_any:
+        subprocess.run(["systemctl", "daemon-reload"], check=True)
+        logger.info("systemd daemon-reload done")
+    return True
+
+
+def _systemctl(action: str, service: str) -> bool:
+    result = subprocess.run(
+        ["systemctl", action, service],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        logger.warning(
+            "systemctl %s %s failed: %s", action, service, result.stderr.strip(),
+        )
+        return False
+    return True
+
+
+def _stop_single_exporter() -> None:
+    """Stop the single labgrid-exporter service used in non-hybrid modes."""
+    result = subprocess.run(
+        ["systemctl", "is-active", f"{SINGLE_SERVICE}.service"],
+        capture_output=True, text=True,
+    )
+    if result.stdout.strip() == "active":
+        logger.info("Stopping single exporter (%s) for hybrid mode", SINGLE_SERVICE)
+        _systemctl("stop", f"{SINGLE_SERVICE}.service")
+
+
+def deploy_local(
+    mode: str,
+    lm_exporter: str,
+    ow_exporter: str,
+) -> bool:
+    """
+    Write exporter configs to /etc/labgrid/ and restart the appropriate services.
+    In hybrid: two separate services. In single-pool: single service.
+    """
+    if mode == "hybrid":
+        if not _install_hybrid_units():
+            return False
+
+        _stop_single_exporter()
+
+        if lm_exporter:
+            dest = EXPORTER_DIR / "exporter-libremesh.yaml"
+            dest.write_text(lm_exporter)
+            logger.info("Written: %s", dest)
+
+        if ow_exporter:
+            dest = EXPORTER_DIR / "exporter-openwrt.yaml"
+            dest.write_text(ow_exporter)
+            logger.info("Written: %s", dest)
+        else:
+            stale = EXPORTER_DIR / "exporter-openwrt.yaml"
+            if stale.exists():
+                stale.unlink()
+                logger.info("Removed stale: %s", stale)
+
+        if lm_exporter:
+            _systemctl("enable", f"{HYBRID_SERVICE_LIBREMESH}.service")
+            _systemctl("restart", f"{HYBRID_SERVICE_LIBREMESH}.service")
+            logger.info("Restarted %s", HYBRID_SERVICE_LIBREMESH)
+        else:
+            _systemctl("stop", f"{HYBRID_SERVICE_LIBREMESH}.service")
+
+        if ow_exporter:
+            _systemctl("enable", f"{HYBRID_SERVICE_OPENWRT}.service")
+            _systemctl("restart", f"{HYBRID_SERVICE_OPENWRT}.service")
+            logger.info("Restarted %s", HYBRID_SERVICE_OPENWRT)
+        else:
+            _systemctl("stop", f"{HYBRID_SERVICE_OPENWRT}.service")
+
+    elif mode == "libremesh-only":
+        dest = EXPORTER_DIR / "exporter.yaml"
+        dest.write_text(lm_exporter)
+        logger.info("Written: %s", dest)
+        _systemctl("restart", f"{SINGLE_SERVICE}.service")
+        logger.info("Restarted %s", SINGLE_SERVICE)
+
+    elif mode == "openwrt-only":
+        dest = EXPORTER_DIR / "exporter.yaml"
+        dest.write_text(ow_exporter)
+        logger.info("Written: %s", dest)
+        _systemctl("restart", f"{SINGLE_SERVICE}.service")
+        logger.info("Restarted %s", SINGLE_SERVICE)
+
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -450,7 +763,20 @@ def main() -> int:
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Always apply full switch config (ignore state file, no differential)",
+        help="Always apply full switch config (ignore state file, no differential). "
+             "Also skips DUT-in-use safety check with --deploy-local.",
+    )
+    parser.add_argument(
+        "--deploy-local",
+        action="store_true",
+        help="Deploy exporter configs to /etc/labgrid/ and restart exporter services. "
+             "In hybrid mode: two services (openwrt + libremesh). "
+             "Requires sudo for systemd operations.",
+    )
+    parser.add_argument(
+        "--ansible-export-dir",
+        metavar="PATH",
+        help="Also write exporter and dut-proxy files to ansible files/exporter/<host>/",
     )
     parser.add_argument(
         "-v", "--verbose",
@@ -490,6 +816,8 @@ def main() -> int:
 
     lm_exporter = generate_libremesh_exporter(libremesh_duts, duts_db) if libremesh_duts else ""
     ow_exporter = generate_openwrt_exporter(openwrt_duts, duts_db) if openwrt_duts else ""
+    all_pool_duts = sorted(set(openwrt_duts + libremesh_duts))
+    dut_proxy_yaml = generate_dut_proxy_config(all_pool_duts, duts_db) if all_pool_duts else ""
     desired_ports, desired_uplink_vlans = compute_desired_hybrid_state(
         openwrt_duts, libremesh_duts, duts_db, uplink_ports
     )
@@ -504,12 +832,36 @@ def main() -> int:
         if ow_exporter:
             print("=== exporter-openwrt.yaml ===")
             print(ow_exporter)
+        if dut_proxy_yaml:
+            print("=== dut-proxy.yaml ===")
+            print(dut_proxy_yaml)
         print("=== Switch commands ===")
         for cmd in switch_cmds:
             print(f"  {cmd}")
         return 0
 
     if args.apply:
+        coordinators = config.get("coordinators", {})
+
+        # Safety check: verify DUTs changing pools are not in use
+        if args.deploy_local and not args.force:
+            changing = get_duts_changing_pool(openwrt_duts, libremesh_duts)
+            if changing:
+                logger.info(
+                    "DUTs changing pool: %s",
+                    {d: f"{old}→{new}" for d, (old, new) in changing.items()},
+                )
+                in_use_errors = check_duts_in_use(changing, coordinators)
+                if in_use_errors:
+                    for err in in_use_errors:
+                        logger.error(err)
+                    logger.error(
+                        "Aborting: DUTs are in use. Wait for them to be released, "
+                        "or use --force to skip this check."
+                    )
+                    return 5
+
+        # Write exporter configs next to pool-config.yaml
         if lm_exporter:
             out_file = out_dir / "exporter-libremesh.yaml"
             out_file.write_text(lm_exporter)
@@ -519,7 +871,24 @@ def main() -> int:
             out_file = out_dir / "exporter-openwrt.yaml"
             out_file.write_text(ow_exporter)
             logger.info("Written: %s", out_file)
+        else:
+            stale = out_dir / "exporter-openwrt.yaml"
+            if stale.exists():
+                stale.unlink()
+                logger.info("Removed stale exporter-openwrt.yaml (openwrt pool is empty)")
 
+        if dut_proxy_yaml:
+            out_file = out_dir / "dut-proxy.yaml"
+            out_file.write_text(dut_proxy_yaml)
+            logger.info("Written: %s", out_file)
+            if args.ansible_export_dir:
+                ansible_dir = Path(args.ansible_export_dir)
+                ansible_dir.mkdir(parents=True, exist_ok=True)
+                ansible_file = ansible_dir / "dut-proxy.yaml"
+                ansible_file.write_text(dut_proxy_yaml)
+                logger.info("Written: %s", ansible_file)
+
+        # Switch configuration
         if not args.no_switch:
             password = load_switch_password()
             if not password:
@@ -529,7 +898,6 @@ def main() -> int:
                 )
                 return 3
 
-            # Differential apply: only configure changed ports
             apply_cmds = switch_cmds
             if (
                 not args.force
@@ -585,20 +953,35 @@ def main() -> int:
             logger.info("Switch configuration skipped (--no-switch)")
             logger.info("Would send %d commands to switch", len(switch_cmds))
 
-        print()
-        print("Next steps:")
-        if mode in ("libremesh-only", "hybrid"):
-            print("  1. Deploy libremesh exporter via Ansible:")
-            print("     cp configs/exporter-libremesh.yaml "
-                  "<fork-openwrt-tests>/ansible/files/exporter/labgrid-fcefyn/exporter.yaml")
-            print("     cd <fork-openwrt-tests>/ansible && ansible-playbook -i inventory.ini "
-                  "playbook_labgrid.yml --tags export")
-        if mode in ("openwrt-only", "hybrid"):
-            print("  2. Deploy openwrt exporter via Ansible (openwrt-tests repo):")
-            print("     cp configs/exporter-openwrt.yaml "
-                  "<openwrt-tests>/ansible/files/exporter/labgrid-fcefyn/exporter.yaml")
-            print("     cd <openwrt-tests>/ansible && ansible-playbook -i inventory.ini "
-                  "playbook_labgrid.yml --tags export")
+        # Deploy to /etc/labgrid/ and restart services
+        if args.deploy_local:
+            if not deploy_local(mode, lm_exporter, ow_exporter):
+                logger.error("Local deployment failed")
+                return 6
+            save_pool_state(openwrt_duts, libremesh_duts)
+            logger.info("Deploy-local complete. Mode: %s", mode)
+        else:
+            save_pool_state(openwrt_duts, libremesh_duts)
+            print()
+            print("Next steps:")
+            if mode in ("libremesh-only", "hybrid"):
+                print("  1. Deploy libremesh exporter and dut-proxy via Ansible:")
+                print("     cp configs/exporter-libremesh.yaml "
+                      "<fork-openwrt-tests>/ansible/files/exporter/labgrid-fcefyn/exporter.yaml")
+                if dut_proxy_yaml:
+                    print("     cp configs/dut-proxy.yaml "
+                          "<fork-openwrt-tests>/ansible/files/exporter/labgrid-fcefyn/dut-proxy.yaml")
+                print("     cd <fork-openwrt-tests>/ansible && ansible-playbook -i inventory.ini "
+                      "playbook_labgrid.yml --tags export")
+            if mode in ("openwrt-only", "hybrid"):
+                print("  2. Deploy openwrt exporter via Ansible (openwrt-tests repo):")
+                print("     cp configs/exporter-openwrt.yaml "
+                      "<openwrt-tests>/ansible/files/exporter/labgrid-fcefyn/exporter.yaml")
+                print("     cd <openwrt-tests>/ansible && ansible-playbook -i inventory.ini "
+                      "playbook_labgrid.yml --tags export")
+            if mode == "hybrid":
+                print()
+                print("  Tip: Use --deploy-local to skip Ansible and deploy directly.")
         return 0
 
     return 0

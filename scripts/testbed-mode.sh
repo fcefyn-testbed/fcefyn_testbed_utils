@@ -10,9 +10,10 @@
 #       Requires openwrt-tests repo path (OPENWRT_TESTS_DIR or --openwrt-dir).
 #
 #   testbed-mode.sh hybrid [--dry-run] [--no-switch]
-#       Apply pool-config.yaml split via pool-manager.py (switch + exporter files),
-#       then deploy each exporter via Ansible.
-#       Edit configs/pool-config.yaml to define the DUT split before running.
+#       Apply pool-config.yaml split via pool-manager.py --deploy-local.
+#       Writes exporter configs to /etc/labgrid/, configures switch, and
+#       restarts two exporter services (openwrt + libremesh).
+#       No Ansible is used. Edit configs/pool-config.yaml first.
 #
 #   --ask-become-pass    Pass -K to ansible-playbook (prompt for sudo password).
 #                       Use if the user does not have passwordless sudo.
@@ -129,44 +130,19 @@ elif [[ "$MODE" == "openwrt" ]]; then
     log "Done. Testbed is in openwrt-only mode."
 
 # ---------------------------------------------------------------------------
-# Mode: hybrid
+# Mode: hybrid (pool-manager only, no Ansible)
 # ---------------------------------------------------------------------------
 elif [[ "$MODE" == "hybrid" ]]; then
     log "Switching to hybrid mode (pool-config.yaml defines DUT split)"
     log "Config: ${POOL_CONFIG}"
 
-    POOL_MANAGER_ARGS=("--apply")
+    POOL_MANAGER_ARGS=("--apply" "--deploy-local")
     $NO_SWITCH && POOL_MANAGER_ARGS+=("--no-switch")
 
-    log "Applying pool manager (switch + exporter files)..."
+    log "Applying pool manager (switch + deploy-local)..."
     run_or_dry python3 "${SCRIPT_DIR}/pool-manager.py" \
         --config "${POOL_CONFIG}" \
         "${POOL_MANAGER_ARGS[@]}"
-
-    LM_EXPORTER="${REPO_ROOT}/configs/exporter-libremesh.yaml"
-    OW_EXPORTER="${REPO_ROOT}/configs/exporter-openwrt.yaml"
-
-    if [[ -f "$LM_EXPORTER" ]]; then
-        log "Deploying libremesh exporter..."
-        LIBREMESH_EXPORTER_DST="${LIBREMESH_ANSIBLE}/files/exporter/labgrid-fcefyn/exporter.yaml"
-        run_or_dry cp "${LM_EXPORTER}" "${LIBREMESH_EXPORTER_DST}"
-        run_or_dry ansible-playbook \
-            -i "${LIBREMESH_ANSIBLE}/${INVENTORY}" \
-            "${LIBREMESH_ANSIBLE}/playbook_labgrid.yml" \
-            --tags export \
-            "${ANSIBLE_EXTRA_ARGS[@]}"
-    fi
-
-    if [[ -f "$OW_EXPORTER" ]] && [[ -d "$OPENWRT_ANSIBLE" ]]; then
-        log "Deploying openwrt exporter..."
-        OW_EXPORTER_DST="${OPENWRT_ANSIBLE}/files/exporter/labgrid-fcefyn/exporter.yaml"
-        run_or_dry cp "${OW_EXPORTER}" "${OW_EXPORTER_DST}"
-        run_or_dry ansible-playbook \
-            -i "${OPENWRT_ANSIBLE}/${INVENTORY}" \
-            "${OPENWRT_ANSIBLE}/playbook_labgrid.yml" \
-            --tags export \
-            "${ANSIBLE_EXTRA_ARGS[@]}"
-    fi
 
     log "Done. Testbed is in hybrid mode."
 fi
