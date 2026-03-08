@@ -12,6 +12,10 @@ Usage:
   pool-manager.py --generate            # Print generated exporter configs (dry run)
   pool-manager.py --apply               # Apply switch config + write exporter files
   pool-manager.py --apply --no-switch   # Write exporter files only (skip switch SSH)
+  pool-manager.py --apply --force       # Always apply full config (ignore state file)
+
+Differential apply: When re-applying hybrid config, only changed ports are configured.
+State is stored in ~/.config/labgrid-switch-state.yaml. Use --force to bypass.
 
 Output exporter files are written next to pool-config.yaml as:
   exporter-libremesh.yaml
@@ -40,6 +44,22 @@ logger = logging.getLogger(__name__)
 SCRIPT_DIR = Path(__file__).parent
 CONFIG_DIR = SCRIPT_DIR.parent / "configs"
 POOL_CONFIG_PATH = CONFIG_DIR / "pool-config.yaml"
+
+# Add scripts dir to path for switch_state import
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+# Optional: switch state for differential apply
+try:
+    from switch_state import (
+        load_switch_state,
+        save_hybrid_state,
+        is_hybrid_state_valid_for_diff,
+    )
+except ImportError:
+    load_switch_state = None
+    save_hybrid_state = None
+    is_hybrid_state_valid_for_diff = None
 
 VLAN_MESH = 200
 TFTP_IP_MESH = "192.168.200.1"
@@ -201,19 +221,14 @@ def _send_cmd(channel, cmd: str) -> None:
     time.sleep(SLEEP_AFTER_PROMPT)
 
 
-def build_hybrid_switch_commands(
+def _get_port_assignments(
     openwrt_duts: list[str],
     libremesh_duts: list[str],
     duts_db: dict,
-    uplink_ports: list[int],
-) -> list[str]:
-    """
-    Build TP-Link CLI commands for hybrid VLAN assignment.
-    Each DUT port is configured independently based on its pool.
-    Uplink ports are tagged for all active VLANs.
-    """
+) -> tuple[list[tuple[int, str, int]], set[int]]:
+    """Return (port_assignments, active_isolated_vlans)."""
     active_isolated_vlans: set[int] = set()
-    port_assignments: list[tuple[int, str, int | None]] = []
+    port_assignments: list[tuple[int, str, int]] = []
 
     for dut_name in openwrt_duts:
         hw = duts_db[dut_name]
@@ -230,31 +245,83 @@ def build_hybrid_switch_commands(
         if "switch_port_poe" in hw:
             port_assignments.append((hw["switch_port_poe"], "mesh", vlan))
 
+    return port_assignments, active_isolated_vlans
+
+
+def compute_desired_hybrid_state(
+    openwrt_duts: list[str],
+    libremesh_duts: list[str],
+    duts_db: dict,
+    uplink_ports: list[int],
+) -> tuple[dict, list[int]]:
+    """
+    Compute desired hybrid state as (ports dict, uplink_tagged_vlans list).
+    ports: {"11": {"pool": "libremesh", "vlan": 200}, ...}
+    """
+    port_assignments, active_isolated_vlans = _get_port_assignments(
+        openwrt_duts, libremesh_duts, duts_db
+    )
+    ports: dict = {}
+    for port, pool, isolated_vlan in port_assignments:
+        vlan = VLAN_MESH if pool == "mesh" else isolated_vlan
+        ports[str(port)] = {"pool": pool, "vlan": vlan}
+
+    uplink_tagged_vlans = sorted(active_isolated_vlans)
+    if libremesh_duts:
+        uplink_tagged_vlans.append(VLAN_MESH)
+        uplink_tagged_vlans = sorted(set(uplink_tagged_vlans))
+
+    return ports, uplink_tagged_vlans
+
+
+def build_hybrid_switch_commands(
+    openwrt_duts: list[str],
+    libremesh_duts: list[str],
+    duts_db: dict,
+    uplink_ports: list[int],
+    ports_to_include: set[int] | None = None,
+    include_uplinks: bool = True,
+) -> list[str]:
+    """
+    Build TP-Link CLI commands for hybrid VLAN assignment.
+    Each DUT port is configured independently based on its pool.
+    Uplink ports are tagged for all active VLANs.
+
+    If ports_to_include is set, only those port numbers are configured (for differential apply).
+    If include_uplinks is False, uplink port config is skipped.
+    """
+    port_assignments, active_isolated_vlans = _get_port_assignments(
+        openwrt_duts, libremesh_duts, duts_db
+    )
+
     cmds = ["enable", "configure"]
 
     if libremesh_duts:
         cmds.extend(["vlan 200", 'name "mesh"', "exit"])
 
     for port, pool, isolated_vlan in port_assignments:
+        if ports_to_include is not None and port not in ports_to_include:
+            continue
         cmds.append(f"interface gigabitEthernet 1/0/{port}")
         if pool == "isolated":
-            cmds.append(f"no switchport general allowed vlan 200")
+            cmds.append("no switchport general allowed vlan 200")
             cmds.append(f"switchport general allowed vlan {isolated_vlan} untagged")
             cmds.append(f"switchport pvid {isolated_vlan}")
             if port == 1:
                 cmds.append("power inline supply disable")
         else:
             cmds.append(f"no switchport general allowed vlan {isolated_vlan}")
-            cmds.append(f"switchport general allowed vlan 200 untagged")
-            cmds.append(f"switchport pvid 200")
+            cmds.append("switchport general allowed vlan 200 untagged")
+            cmds.append("switchport pvid 200")
             if port == 1:
                 cmds.append("power inline supply disable")
         cmds.append("exit")
 
-    if uplink_ports:
+    if include_uplinks and uplink_ports:
         all_vlans = sorted(active_isolated_vlans)
         if libremesh_duts:
             all_vlans.append(VLAN_MESH)
+        all_vlans = sorted(set(all_vlans))
         if all_vlans:
             vlan_str = ",".join(str(v) for v in all_vlans)
             for uplink_port in uplink_ports:
@@ -381,6 +448,11 @@ def main() -> int:
         help="Skip switch SSH configuration (write exporter files only)",
     )
     parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Always apply full switch config (ignore state file, no differential)",
+    )
+    parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Enable debug logging",
@@ -418,6 +490,9 @@ def main() -> int:
 
     lm_exporter = generate_libremesh_exporter(libremesh_duts, duts_db) if libremesh_duts else ""
     ow_exporter = generate_openwrt_exporter(openwrt_duts, duts_db) if openwrt_duts else ""
+    desired_ports, desired_uplink_vlans = compute_desired_hybrid_state(
+        openwrt_duts, libremesh_duts, duts_db, uplink_ports
+    )
     switch_cmds = build_hybrid_switch_commands(
         openwrt_duts, libremesh_duts, duts_db, uplink_ports
     )
@@ -453,15 +528,59 @@ def main() -> int:
                     "~/.config/poe_switch_control.conf or via env var."
                 )
                 return 3
-            success = apply_switch_config(
-                switch_cfg.get("host", "192.168.0.1"),
-                switch_cfg.get("user", "admin"),
-                password,
-                switch_cmds,
-            )
-            if not success:
-                logger.error("Switch configuration failed")
-                return 4
+
+            # Differential apply: only configure changed ports
+            apply_cmds = switch_cmds
+            if (
+                not args.force
+                and load_switch_state
+                and save_hybrid_state
+                and is_hybrid_state_valid_for_diff
+            ):
+                current_state = load_switch_state()
+                if is_hybrid_state_valid_for_diff(current_state):
+                    current_ports = current_state.get("hybrid_ports") or {}
+                    current_uplink_vlans = current_state.get("uplink_tagged_vlans") or []
+                    ports_changed: set[int] = set()
+                    for port_str, desired_cfg in desired_ports.items():
+                        current_cfg = current_ports.get(port_str)
+                        if current_cfg != desired_cfg:
+                            ports_changed.add(int(port_str))
+                    uplinks_changed = sorted(desired_uplink_vlans) != sorted(
+                        current_uplink_vlans
+                    )
+                    if not ports_changed and not uplinks_changed:
+                        logger.info("Switch config unchanged, skipping SSH")
+                        apply_cmds = []
+                    else:
+                        apply_cmds = build_hybrid_switch_commands(
+                            openwrt_duts,
+                            libremesh_duts,
+                            duts_db,
+                            uplink_ports,
+                            ports_to_include=ports_changed,
+                            include_uplinks=uplinks_changed,
+                        )
+                        logger.info(
+                            "Differential apply: %d ports, uplinks=%s",
+                            len(ports_changed),
+                            uplinks_changed,
+                        )
+
+            if apply_cmds:
+                success = apply_switch_config(
+                    switch_cfg.get("host", "192.168.0.1"),
+                    switch_cfg.get("user", "admin"),
+                    password,
+                    apply_cmds,
+                )
+                if not success:
+                    logger.error("Switch configuration failed")
+                    return 4
+                if save_hybrid_state and (openwrt_duts or libremesh_duts):
+                    save_hybrid_state(desired_ports, desired_uplink_vlans)
+            else:
+                success = True
         else:
             logger.info("Switch configuration skipped (--no-switch)")
             logger.info("Would send %d commands to switch", len(switch_cmds))

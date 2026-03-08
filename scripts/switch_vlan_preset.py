@@ -18,6 +18,16 @@ import sys
 import time
 from pathlib import Path
 
+# Add scripts dir for switch_state import
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+try:
+    from switch_state import save_preset_state
+except ImportError:
+    save_preset_state = None
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -219,6 +229,8 @@ def run_preset(
         if success:
             logger.info("Preset '%s' applied successfully", preset_name)
             _write_vlan_mode_file(preset_name)
+            if save_preset_state:
+                save_preset_state(preset_name)
         return success
 
     except Exception as e:
