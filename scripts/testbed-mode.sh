@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # testbed-mode - Switch the FCEFYN testbed between operational modes.
 #
+# Run as:  ./testbed-mode.sh <mode>   OR   sudo ./testbed-mode.sh <mode>
+#   All three modes work with either. Hybrid prompts for sudo when needed if run without.
+#
 # Usage:
 #   testbed-mode.sh libremesh [--dry-run]
 #       Deploy libremesh-tests config via Ansible (VLAN 200 only).
@@ -93,6 +96,10 @@ run_or_dry() {
 if [[ "$MODE" == "libremesh" ]]; then
     log "Switching to libremesh-only mode (VLAN 200 for all DUTs)"
 
+    log "Stopping hybrid exporters (use single labgrid-exporter)..."
+    run_or_dry sudo systemctl stop labgrid-exporter-openwrt labgrid-exporter-libremesh 2>/dev/null || true
+    run_or_dry sudo systemctl disable labgrid-exporter-openwrt labgrid-exporter-libremesh 2>/dev/null || true
+
     log "Applying mesh VLAN preset on switch..."
     run_or_dry python3 "${SCRIPT_DIR}/switch_vlan_preset.py" mesh
 
@@ -117,6 +124,10 @@ elif [[ "$MODE" == "openwrt" ]]; then
         exit 1
     fi
 
+    log "Stopping hybrid exporters (use single labgrid-exporter)..."
+    run_or_dry sudo systemctl stop labgrid-exporter-openwrt labgrid-exporter-libremesh 2>/dev/null || true
+    run_or_dry sudo systemctl disable labgrid-exporter-openwrt labgrid-exporter-libremesh 2>/dev/null || true
+
     log "Applying isolated VLAN preset on switch..."
     run_or_dry python3 "${SCRIPT_DIR}/switch_vlan_preset.py" isolated
 
@@ -140,7 +151,8 @@ elif [[ "$MODE" == "hybrid" ]]; then
     $NO_SWITCH && POOL_MANAGER_ARGS+=("--no-switch")
 
     log "Applying pool manager (switch + deploy-local)..."
-    run_or_dry python3 "${SCRIPT_DIR}/pool-manager.py" \
+    # deploy-local writes to /etc/labgrid/ and restarts systemd services; requires sudo
+    run_or_dry sudo python3 "${SCRIPT_DIR}/pool-manager.py" \
         --config "${POOL_CONFIG}" \
         "${POOL_MANAGER_ARGS[@]}"
 
