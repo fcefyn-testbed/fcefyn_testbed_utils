@@ -705,13 +705,14 @@ def deploy_local(
 ) -> bool:
     """
     Write exporter configs to /etc/labgrid/ and restart the appropriate services.
-    In hybrid: two separate services. In single-pool: single service.
+    Enables/disables services so the last mode persists across host reboots.
     """
     if mode == "hybrid":
         if not _install_hybrid_units():
             return False
 
         _stop_single_exporter()
+        _systemctl("disable", f"{SINGLE_SERVICE}.service")
 
         if lm_exporter:
             dest = EXPORTER_DIR / "exporter-libremesh.yaml"
@@ -734,6 +735,7 @@ def deploy_local(
             logger.info("Restarted %s", HYBRID_SERVICE_LIBREMESH)
         else:
             _systemctl("stop", f"{HYBRID_SERVICE_LIBREMESH}.service")
+            _systemctl("disable", f"{HYBRID_SERVICE_LIBREMESH}.service")
 
         if ow_exporter:
             _systemctl("enable", f"{HYBRID_SERVICE_OPENWRT}.service")
@@ -741,20 +743,27 @@ def deploy_local(
             logger.info("Restarted %s", HYBRID_SERVICE_OPENWRT)
         else:
             _systemctl("stop", f"{HYBRID_SERVICE_OPENWRT}.service")
+            _systemctl("disable", f"{HYBRID_SERVICE_OPENWRT}.service")
 
     elif mode == "libremesh-only":
         _stop_hybrid_exporters()
+        _systemctl("disable", f"{HYBRID_SERVICE_OPENWRT}.service")
+        _systemctl("disable", f"{HYBRID_SERVICE_LIBREMESH}.service")
         dest = EXPORTER_DIR / "exporter.yaml"
         dest.write_text(lm_exporter)
         logger.info("Written: %s", dest)
+        _systemctl("enable", f"{SINGLE_SERVICE}.service")
         _systemctl("restart", f"{SINGLE_SERVICE}.service")
         logger.info("Restarted %s", SINGLE_SERVICE)
 
     elif mode == "openwrt-only":
         _stop_hybrid_exporters()
+        _systemctl("disable", f"{HYBRID_SERVICE_OPENWRT}.service")
+        _systemctl("disable", f"{HYBRID_SERVICE_LIBREMESH}.service")
         dest = EXPORTER_DIR / "exporter.yaml"
         dest.write_text(ow_exporter)
         logger.info("Written: %s", dest)
+        _systemctl("enable", f"{SINGLE_SERVICE}.service")
         _systemctl("restart", f"{SINGLE_SERVICE}.service")
         logger.info("Restarted %s", SINGLE_SERVICE)
 

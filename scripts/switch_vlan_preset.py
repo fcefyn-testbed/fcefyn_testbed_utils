@@ -43,10 +43,26 @@ SLEEP_INITIAL = 2
 SLEEP_CLEAR = 1
 PROMPT_TIMEOUT = 12
 
-CONFIG_PATHS = (
-    os.path.expanduser("~/.config/poe_switch_control.conf"),
-    "/etc/poe_switch_control.conf",
-)
+def _get_config_paths() -> tuple:
+    """
+    Return config file paths to check. When running as root under sudo,
+    include SUDO_USER's home so the switch password is found.
+    """
+    paths = [
+        os.path.expanduser("~/.config/poe_switch_control.conf"),
+        "/etc/poe_switch_control.conf",
+    ]
+    if os.geteuid() == 0:
+        sudo_user = os.environ.get("SUDO_USER")
+        if sudo_user:
+            try:
+                import pwd
+                home = Path(pwd.getpwnam(sudo_user).pw_dir)
+                paths.insert(1, str(home / ".config" / "poe_switch_control.conf"))
+            except (ImportError, KeyError):
+                pass
+    return tuple(paths)
+
 
 # Preset definitions: list of (interface, commands under interface)
 # Commands are sent after "interface gigabitEthernet 1/0/X"
@@ -99,7 +115,7 @@ PRESET_MESH = [
 def load_config() -> dict:
     """Load switch credentials from config file (same as poe_switch_control)."""
     config = {}
-    for path in CONFIG_PATHS:
+    for path in _get_config_paths():
         if os.path.isfile(path) and os.access(path, os.R_OK):
             try:
                 with open(path) as f:
