@@ -387,10 +387,21 @@ def build_hybrid_switch_commands(
 
 def load_switch_password() -> str:
     """Load switch password from poe_switch_control.conf."""
-    config_paths = (
+    config_paths = [
         os.path.expanduser("~/.config/poe_switch_control.conf"),
         "/etc/poe_switch_control.conf",
-    )
+    ]
+    # When running under sudo, also check original user's home for the switch config
+    if os.geteuid() == 0:
+        sudo_user = os.environ.get("SUDO_USER")
+        if sudo_user:
+            try:
+                import pwd
+                home = Path(pwd.getpwnam(sudo_user).pw_dir)
+                conf = home / ".config" / "poe_switch_control.conf"
+                config_paths.insert(1, str(conf))
+            except (ImportError, KeyError):
+                pass
     for path in config_paths:
         if os.path.isfile(path) and os.access(path, os.R_OK):
             with open(path) as f:
@@ -660,6 +671,18 @@ def _stop_single_exporter() -> None:
         _systemctl("stop", f"{SINGLE_SERVICE}.service")
 
 
+def _stop_hybrid_exporters() -> None:
+    """Stop hybrid exporter services when switching to single-exporter mode."""
+    for svc in (HYBRID_SERVICE_OPENWRT, HYBRID_SERVICE_LIBREMESH):
+        result = subprocess.run(
+            ["systemctl", "is-active", f"{svc}.service"],
+            capture_output=True, text=True,
+        )
+        if result.stdout.strip() == "active":
+            logger.info("Stopping hybrid exporter (%s) for single-exporter mode", svc)
+            _systemctl("stop", f"{svc}.service")
+
+
 def deploy_local(
     mode: str,
     lm_exporter: str,
@@ -705,6 +728,7 @@ def deploy_local(
             _systemctl("stop", f"{HYBRID_SERVICE_OPENWRT}.service")
 
     elif mode == "libremesh-only":
+        _stop_hybrid_exporters()
         dest = EXPORTER_DIR / "exporter.yaml"
         dest.write_text(lm_exporter)
         logger.info("Written: %s", dest)
@@ -712,6 +736,7 @@ def deploy_local(
         logger.info("Restarted %s", SINGLE_SERVICE)
 
     elif mode == "openwrt-only":
+        _stop_hybrid_exporters()
         dest = EXPORTER_DIR / "exporter.yaml"
         dest.write_text(ow_exporter)
         logger.info("Written: %s", dest)
