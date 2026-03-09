@@ -70,23 +70,26 @@ def switch_lock(timeout: float = LOCK_TIMEOUT) -> Generator[bool, None, None]:
 def _get_config_paths() -> list[str]:
     """Return config file paths to check, accounting for sudo.
 
-    When running as root under sudo, SUDO_USER's config is checked first
-    (the user who invoked sudo has the password in their ~/.config/).
+    Priority:
+    1. POE_SWITCH_CONFIG env var (explicit path from caller, e.g. testbed-mode.sh)
+    2. When root: SUDO_USER's ~/.config/poe_switch_control.conf
+    3. Current user's ~/.config/poe_switch_control.conf
+    4. /etc/poe_switch_control.conf
     """
-    paths = [
-        os.path.expanduser("~/.config/poe_switch_control.conf"),
-        "/etc/poe_switch_control.conf",
-    ]
+    paths: list[str] = []
+    if explicit := os.environ.get("POE_SWITCH_CONFIG"):
+        paths.append(explicit)
     if os.geteuid() == 0:
         sudo_user = os.environ.get("SUDO_USER")
         if sudo_user:
             try:
                 import pwd
                 home = Path(pwd.getpwnam(sudo_user).pw_dir)
-                sudo_user_config = str(home / ".config" / "poe_switch_control.conf")
-                paths.insert(0, sudo_user_config)
+                paths.append(str(home / ".config" / "poe_switch_control.conf"))
             except (ImportError, KeyError):
                 pass
+    paths.append(os.path.expanduser("~/.config/poe_switch_control.conf"))
+    paths.append("/etc/poe_switch_control.conf")
     return paths
 
 

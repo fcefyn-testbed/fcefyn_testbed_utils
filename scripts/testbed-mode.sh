@@ -162,7 +162,14 @@ elif [[ "$MODE" == "hybrid" ]]; then
 
     log "Applying pool manager (switch + deploy-local)..."
     # deploy-local writes to /etc/labgrid/ and restarts systemd services; requires sudo
-    run_or_dry sudo python3 "${SCRIPT_DIR}/switch/pool-manager.py" \
+    # Pass switch config path so pool-manager finds POE_SWITCH_PASSWORD when running under sudo
+    REAL_USER="${SUDO_USER:-$USER}"
+    POE_CONF="${HOME}/.config/poe_switch_control.conf"
+    if [[ -n "$REAL_USER" && "$REAL_USER" != "root" ]]; then
+        REAL_HOME=$(getent passwd "$REAL_USER" 2>/dev/null | cut -d: -f6)
+        [[ -n "$REAL_HOME" ]] && POE_CONF="${REAL_HOME}/.config/poe_switch_control.conf"
+    fi
+    run_or_dry sudo -E POE_SWITCH_CONFIG="$POE_CONF" python3 "${SCRIPT_DIR}/switch/pool-manager.py" \
         --config "${POOL_CONFIG}" \
         "${POOL_MANAGER_ARGS[@]}"
 
