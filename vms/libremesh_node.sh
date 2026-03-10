@@ -6,7 +6,13 @@
 
 set -e
 
-BASE_IMG="libremesh-vwifi-x86-64-ext4-combined.img"
+# directorio donde está el script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# imagen de firmware (en ../firmwares)
+BASE_IMG="$SCRIPT_DIR/../firmwares/qemu/libremesh/libremesh-vwifi-x86-64-ext4-combined.img"
+
+
 BRIDGE="br0"
 HOST_IP="10.13.0.10"
 NODE_IP="10.13.255.254"
