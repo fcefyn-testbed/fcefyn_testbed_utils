@@ -1,0 +1,28 @@
+---
+# Playbook: FCEFyN testbed infrastructure.
+#
+# Installs components NOT covered by openwrt-tests/libremesh-tests playbook_labgrid.yml:
+#   - virtual_mesh: vwifi-server, QEMU, mac80211_hwsim (for virtual mesh tests)
+#   - arduino: arduino-relay-daemon, udev rules (for physical DUT power control)
+#
+# Run AFTER or BEFORE playbook_labgrid.yml from fork-openwrt-tests.
+#
+# Usage (from repo root):
+#   pipx run --spec ansible-core ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --ask-become-pass
+#   pipx run --spec ansible-core ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags virtual_mesh --ask-become-pass
+#   pipx run --spec ansible-core ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags arduino --ask-become-pass
+#
+# Or if ansible-core is installed: ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml -K
+
+- name: FCEFyN testbed infrastructure
+  hosts: localhost
+  become: true
+  roles:
+    - role: virtual_mesh
+      tags:
+        - virtual_mesh
+        - testbed
+    - role: arduino_relay
+      tags:
+        - arduino
+        - testbed
