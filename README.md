@@ -1,4 +1,4 @@
-# pi-hil-testing-utils
+# fcefyn-testbed-utils
 
 Infraestructura complementaria del banco de pruebas HIL (Hardware-in-the-Loop) de FCEFyN: configs, scripts y firmwares que no están en libremesh-tests.
 
@@ -7,7 +7,7 @@ Infraestructura complementaria del banco de pruebas HIL (Hardware-in-the-Loop) d
 ## Estructura
 
 ```
-pi-hil-testing-utils/
+fcefyn-testbed-utils/
 ├── configs/          # Documentación y configs del lab
 │   ├── README.md     # Índice, orden de lectura
 │   ├── host-config.md, tftp-server.md, switch-config.md, ...
