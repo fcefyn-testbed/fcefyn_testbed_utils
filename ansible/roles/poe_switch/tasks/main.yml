@@ -7,17 +7,11 @@
 # All files go to /usr/local/bin/ so poe_switch_control can import switch_client
 # (it adds parent dir of __file__ to sys.path).
 
-- name: Install Python pip for netmiko
+- name: Install netmiko for switch SSH (apt avoids PEP 668 externally-managed-environment)
   ansible.builtin.apt:
-    name: python3-pip
+    name: python3-netmiko
     state: present
     update_cache: yes
-
-- name: Install netmiko for switch SSH
-  ansible.builtin.pip:
-    name: netmiko
-    state: present
-    executable: pip3
 
 - name: Copy poe_switch_control.py to /usr/local/bin
   ansible.builtin.copy:
