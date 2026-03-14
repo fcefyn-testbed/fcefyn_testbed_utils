@@ -43,7 +43,6 @@ def find_openwrt_tests_dir():
     possible_paths = [
         Path.home() / "Documents" / "openwrt-tests",
         Path.home() / "openwrt-tests",
-        Path("/home/franco/Documents/openwrt-tests"),
         Path.cwd().parent / "openwrt-tests",
     ]
     

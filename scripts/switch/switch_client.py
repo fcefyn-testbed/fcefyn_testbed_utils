@@ -19,13 +19,12 @@ import logging
 import os
 import time
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Generator
+
+from constants import DEFAULT_SWITCH_HOST, DEFAULT_SWITCH_USER, user_config_dir
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_HOST = "192.168.0.1"
-DEFAULT_USER = "admin"
 DEFAULT_DEVICE_TYPE = "tplink_jetstream"
 
 LOCK_PATH = "/tmp/poe_switch.lock"
@@ -96,23 +95,13 @@ def _get_config_paths() -> list[str]:
 
     Priority:
     1. POE_SWITCH_CONFIG env var (explicit path from caller, e.g. testbed-mode.sh)
-    2. When root: SUDO_USER's ~/.config/poe_switch_control.conf
-    3. Current user's ~/.config/poe_switch_control.conf
-    4. /etc/poe_switch_control.conf
+    2. ~/.config/poe_switch_control.conf (SUDO_USER-aware via user_config_dir)
+    3. /etc/poe_switch_control.conf
     """
     paths: list[str] = []
     if explicit := os.environ.get("POE_SWITCH_CONFIG"):
         paths.append(explicit)
-    if os.geteuid() == 0:
-        sudo_user = os.environ.get("SUDO_USER")
-        if sudo_user:
-            try:
-                import pwd
-                home = Path(pwd.getpwnam(sudo_user).pw_dir)
-                paths.append(str(home / ".config" / "poe_switch_control.conf"))
-            except (ImportError, KeyError):
-                pass
-    paths.append(os.path.expanduser("~/.config/poe_switch_control.conf"))
+    paths.append(str(user_config_dir() / "poe_switch_control.conf"))
     paths.append("/etc/poe_switch_control.conf")
     return paths
 
@@ -168,8 +157,8 @@ def get_credentials(
     """Build a credentials dict, filling gaps from config/env."""
     config = load_config()
     return {
-        "host": host or os.environ.get("POE_SWITCH_HOST") or config.get("POE_SWITCH_HOST", DEFAULT_HOST),
-        "user": user or os.environ.get("POE_SWITCH_USER") or config.get("POE_SWITCH_USER", DEFAULT_USER),
+        "host": host or os.environ.get("POE_SWITCH_HOST") or config.get("POE_SWITCH_HOST", DEFAULT_SWITCH_HOST),
+        "user": user or os.environ.get("POE_SWITCH_USER") or config.get("POE_SWITCH_USER", DEFAULT_SWITCH_USER),
         "password": password or os.environ.get("POE_SWITCH_PASSWORD") or config.get("POE_SWITCH_PASSWORD", ""),
         "device_type": device_type or config.get("POE_SWITCH_DEVICE_TYPE", DEFAULT_DEVICE_TYPE),
     }

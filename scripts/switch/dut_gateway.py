@@ -21,10 +21,9 @@ try:
 except ImportError:
     yaml = None
 
-logger = logging.getLogger(__name__)
+from constants import MESH_GATEWAY, MESH_DNS
 
-MESH_GATEWAY = "192.168.200.254"
-MESH_DNS = "8.8.8.8 8.8.4.4"
+logger = logging.getLogger(__name__)
 
 SSH_TIMEOUT = 10
 SSH_BASE_CMD = [

@@ -27,16 +27,19 @@ import sys
 import time
 from pathlib import Path
 
+SWITCH_DIR = Path(__file__).resolve().parent / "switch"
+if str(SWITCH_DIR) not in sys.path:
+    sys.path.insert(0, str(SWITCH_DIR))
+
 try:
     import serial
 except ImportError:
     print("ERROR: pyserial required. Run: pip install pyserial", file=sys.stderr)
     sys.exit(2)
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+from constants import repo_root
 
-MESH_GATEWAY = "192.168.200.254"
-MESH_DNS = ["8.8.8.8", "8.8.4.4"]
+REPO_ROOT = repo_root()
 
 DEFAULT_DEVICE_IP_MAP = {
     "/dev/belkin-rt3200-1": "10.13.200.11",

@@ -28,12 +28,12 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent.parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from switch_client import SwitchClient, load_config, get_switch_driver
 from dut_gateway import load_duts, update_dut_gateways
+from constants import DEFAULT_SWITCH_HOST, DEFAULT_SWITCH_USER, repo_root, user_config_dir
 
 try:
     from switch_state import save_preset_state
@@ -46,10 +46,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-DEFAULT_HOST = "192.168.0.1"
-DEFAULT_USER = "admin"
-
-VLAN_MODE_FILE = Path(os.path.expanduser("~/.config/labgrid-vlan-mode"))
+VLAN_MODE_FILE = user_config_dir() / "labgrid-vlan-mode"
 
 
 def _write_vlan_mode_file(preset_name: str) -> None:
@@ -95,7 +92,7 @@ def run_preset(
         _write_vlan_mode_file(preset_name)
         if save_preset_state:
             save_preset_state(preset_name)
-        pool_cfg = config_path or (REPO_ROOT / "configs" / "pool-config.yaml")
+        pool_cfg = config_path or (repo_root() / "configs" / "pool-config.yaml")
         dut_modes = _build_dut_modes(preset_name, pool_cfg)
         if dut_modes:
             update_dut_gateways(dut_modes, pool_cfg, dry_run=dry_run)
@@ -128,13 +125,13 @@ For hybrid mode (split DUTs), use pool-manager.py instead.
     )
     parser.add_argument(
         "--host",
-        default=os.environ.get("POE_SWITCH_HOST") or config.get("POE_SWITCH_HOST", DEFAULT_HOST),
-        help=f"Switch IP (default: {DEFAULT_HOST})",
+        default=os.environ.get("POE_SWITCH_HOST") or config.get("POE_SWITCH_HOST", DEFAULT_SWITCH_HOST),
+        help=f"Switch IP (default: {DEFAULT_SWITCH_HOST})",
     )
     parser.add_argument(
         "--user",
-        default=os.environ.get("POE_SWITCH_USER") or config.get("POE_SWITCH_USER", DEFAULT_USER),
-        help=f"SSH username (default: {DEFAULT_USER})",
+        default=os.environ.get("POE_SWITCH_USER") or config.get("POE_SWITCH_USER", DEFAULT_SWITCH_USER),
+        help=f"SSH username (default: {DEFAULT_SWITCH_USER})",
     )
     parser.add_argument(
         "--password",
@@ -168,7 +165,7 @@ For hybrid mode (split DUTs), use pool-manager.py instead.
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    pool_cfg = args.config or (REPO_ROOT / "configs" / "pool-config.yaml")
+    pool_cfg = args.config or (repo_root() / "configs" / "pool-config.yaml")
 
     if args.dry_run:
         commands = driver.build_preset_commands(args.preset)

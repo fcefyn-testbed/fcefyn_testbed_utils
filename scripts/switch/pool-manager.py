@@ -47,20 +47,18 @@ except ImportError:
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
 SCRIPT_DIR = Path(__file__).parent
-REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-CONFIG_DIR = REPO_ROOT / "configs"
-POOL_CONFIG_PATH = CONFIG_DIR / "pool-config.yaml"
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from switch_client import SwitchClient, load_switch_password, get_switch_driver
 from dut_gateway import update_dut_gateways
+from constants import VLAN_MESH, repo_root, user_config_dir
 
 try:
     from switch_state import (
@@ -73,7 +71,9 @@ except ImportError:
     save_hybrid_state = None
     is_hybrid_state_valid_for_diff = None
 
-VLAN_MESH = 200
+REPO_ROOT = repo_root()
+CONFIG_DIR = REPO_ROOT / "configs"
+POOL_CONFIG_PATH = CONFIG_DIR / "pool-config.yaml"
 TFTP_IP_MESH = "192.168.200.1"
 
 # Default SSH alias when ssh_alias not in pool-config
@@ -97,20 +97,8 @@ SYSTEMD_DIR = Path("/etc/systemd/system")
 
 
 def _get_config_path(filename: str) -> Path:
-    """
-    Return path to a config file in ~/.config/.
-    When running as root under sudo, use SUDO_USER's home for consistency.
-    """
-    if os.geteuid() == 0:
-        sudo_user = os.environ.get("SUDO_USER")
-        if sudo_user:
-            try:
-                import pwd
-                home = Path(pwd.getpwnam(sudo_user).pw_dir)
-                return home / ".config" / filename
-            except (ImportError, KeyError):
-                pass
-    return Path(os.path.expanduser(f"~/.config/{filename}"))
+    """Return path to a config file in ~/.config/, respecting SUDO_USER."""
+    return user_config_dir() / filename
 
 
 # ---------------------------------------------------------------------------
