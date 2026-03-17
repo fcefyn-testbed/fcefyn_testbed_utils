@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 import socket
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -14,7 +13,6 @@ import yaml
 
 from .config import (
     ARDUINO_DAEMON_SOCKET,
-    CHANNEL_NAMES,
     POOL_CONFIG_PATH,
     RUNNER_SERVICE_GLOB,
     SSH_CONNECT_TIMEOUT,

@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from textual.widgets import DataTable, Static
 
 from .collectors import DutStatus, ModeInfo, RelayState, ServiceState
-from .config import CHANNEL_NAMES, CHANNEL_PINS, INFRA_CHANNELS, RELAY_CHANNEL_COUNT
+from .config import CHANNEL_NAMES, CHANNEL_PINS, RELAY_CHANNEL_COUNT
 
 
 # ---------------------------------------------------------------------------
