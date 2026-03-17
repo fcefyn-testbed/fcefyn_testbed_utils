@@ -420,3 +420,54 @@ def pool_move_dut(dut_name: str, target_pool: str) -> Tuple[bool, str]:
         return True, f"moved {dut_name} → {target_pool}"
     except Exception as exc:
         return False, str(exc)
+
+
+async def change_testbed_mode(target_mode: str) -> Tuple[bool, str]:
+    """
+    Change testbed mode by moving all DUTs to the appropriate pool(s)
+    and running pool-manager.py --apply.
+
+    target_mode: 'libremesh', 'openwrt', or 'hybrid'
+    """
+    path = Path(POOL_CONFIG_PATH)
+    if not path.exists():
+        return False, f"config file not found: {path}"
+
+    try:
+        with open(path) as f:
+            data = yaml.safe_load(f)
+
+        all_duts = list(data.get("duts", {}).keys())
+        pools = data.get("pools", {})
+
+        if target_mode == "libremesh":
+            pools["libremesh"] = {"duts": all_duts}
+            pools["openwrt"] = {"duts": []}
+        elif target_mode == "openwrt":
+            pools["openwrt"] = {"duts": all_duts}
+            pools["libremesh"] = {"duts": []}
+        elif target_mode == "hybrid":
+            half = len(all_duts) // 2
+            pools["libremesh"] = {"duts": all_duts[:half]}
+            pools["openwrt"] = {"duts": all_duts[half:]}
+        else:
+            return False, f"unknown mode: {target_mode}"
+
+        data["pools"] = pools
+        with open(path, "w") as f:
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+
+        proc = await asyncio.create_subprocess_exec(
+            "pool-manager.py", "--apply", "--force",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        output = ((stdout or b"") + (stderr or b"")).decode().strip()
+
+        if proc.returncode == 0:
+            return True, f"Modo cambiado a {target_mode}"
+        return False, output or f"pool-manager.py exit code {proc.returncode}"
+
+    except Exception as exc:
+        return False, str(exc)

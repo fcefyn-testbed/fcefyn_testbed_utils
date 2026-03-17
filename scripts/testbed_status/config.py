@@ -26,8 +26,8 @@ CHANNEL_NAMES = {
     5: "(sin asignar)",
     6: "(sin asignar)",
     7: "(sin asignar)",
-    8: "Cooler",
-    9: "Switch",
+    8: "(sin asignar)",
+    9: "Cooler",
     10: "Fuente",
 }
 
@@ -54,3 +54,5 @@ RUNNER_SERVICE_GLOB = "actions.runner.*"
 FAST_REFRESH_SECONDS = 5
 SLOW_REFRESH_SECONDS = 30
 SSH_CONNECT_TIMEOUT = 3
+
+LOG_MAX_LINES = 50

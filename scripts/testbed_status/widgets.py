@@ -9,7 +9,7 @@ from textual.message import Message
 from textual.widgets import DataTable, Static
 
 from .collectors import DutStatus, ModeInfo, RelayState, ServiceState
-from .config import CHANNEL_NAMES, CHANNEL_PINS, INFRA_CHANNELS, RELAY_CHANNEL_COUNT
+from .config import CHANNEL_NAMES, CHANNEL_PINS, INFRA_CHANNELS, LOG_MAX_LINES, RELAY_CHANNEL_COUNT
 
 
 # ---------------------------------------------------------------------------
@@ -33,13 +33,28 @@ class PoolMoveRequest(Message):
     current_pool: str
 
 
+@dataclass
+class ModeChangeRequest(Message):
+    current_mode: str
+
+
 # ---------------------------------------------------------------------------
 # Mode header
 # ---------------------------------------------------------------------------
 class ModeHeader(Static):
-    """Top bar showing current testbed mode."""
+    """Top bar showing current testbed mode. Click or press Enter to change mode."""
+
+    can_focus = True
+    _current_mode: str = "unknown"
+
+    DEFAULT_CSS = """
+    ModeHeader:focus {
+        background: $accent;
+    }
+    """
 
     def update_mode(self, info: ModeInfo) -> None:
+        self._current_mode = info.mode
         mode_upper = info.mode.upper()
         style_map = {
             "LIBREMESH": "[bold green]",
@@ -47,8 +62,16 @@ class ModeHeader(Static):
             "HYBRID": "[bold yellow]",
         }
         color = style_map.get(mode_upper, "[bold red]")
-        text = f" Modo: {color}{mode_upper}[/]  ({info.detail})"
+        text = f" Modo: {color}{mode_upper}[/]  ({info.detail})  [dim][Enter para cambiar][/]"
         self.update(text)
+
+    def on_click(self) -> None:
+        self.post_message(ModeChangeRequest(current_mode=self._current_mode))
+
+    def on_key(self, event) -> None:
+        if event.key == "enter":
+            event.stop()
+            self.post_message(ModeChangeRequest(current_mode=self._current_mode))
 
 
 # ---------------------------------------------------------------------------
@@ -256,3 +279,55 @@ class DutsPanel(DataTable):
 
         if saved_row < self.row_count:
             self.move_cursor(row=saved_row)
+
+
+# ---------------------------------------------------------------------------
+# Command log panel
+# ---------------------------------------------------------------------------
+class CommandLogPanel(Static):
+    """Collapsible panel showing executed commands."""
+
+    _expanded: bool = False
+    _lines: List[str]
+
+    DEFAULT_CSS = """
+    CommandLogPanel {
+        height: auto;
+        max-height: 1;
+        background: $surface;
+        border-top: solid $primary;
+        padding: 0 1;
+        overflow-y: auto;
+    }
+    CommandLogPanel.expanded {
+        max-height: 12;
+    }
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._lines = []
+
+    def toggle(self) -> None:
+        self._expanded = not self._expanded
+        self.set_class(self._expanded, "expanded")
+        self._render_content()
+
+    def add_log(self, line: str) -> None:
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self._lines.append(f"[dim]{timestamp}[/] {line}")
+        if len(self._lines) > LOG_MAX_LINES:
+            self._lines = self._lines[-LOG_MAX_LINES:]
+        self._render_content()
+
+    def _render_content(self) -> None:
+        if not self._expanded:
+            count = len(self._lines)
+            hint = f" ({count} entries)" if count else ""
+            self.update(f"[dim]Log{hint} — [l] para expandir[/]")
+        else:
+            if self._lines:
+                self.update("\n".join(self._lines[-12:]))
+            else:
+                self.update("[dim]No hay comandos ejecutados aún[/]")
