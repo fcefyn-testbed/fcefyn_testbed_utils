@@ -2,12 +2,35 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from dataclasses import dataclass
+from typing import Dict, List, Optional
 
+from textual.message import Message
 from textual.widgets import DataTable, Static
 
 from .collectors import DutStatus, ModeInfo, RelayState, ServiceState
-from .config import CHANNEL_NAMES, CHANNEL_PINS, RELAY_CHANNEL_COUNT
+from .config import CHANNEL_NAMES, CHANNEL_PINS, INFRA_CHANNELS, RELAY_CHANNEL_COUNT
+
+
+# ---------------------------------------------------------------------------
+# Custom messages posted by panels so the App can handle actions
+# ---------------------------------------------------------------------------
+@dataclass
+class RelayToggleRequest(Message):
+    channel: int
+    current_state: Optional[bool]
+    is_infra: bool
+
+
+@dataclass
+class ServiceActionRequest(Message):
+    service_name: str
+
+
+@dataclass
+class PoolMoveRequest(Message):
+    dut_name: str
+    current_pool: str
 
 
 # ---------------------------------------------------------------------------
@@ -32,18 +55,26 @@ class ModeHeader(Static):
 # Relay panel
 # ---------------------------------------------------------------------------
 class RelayPanel(DataTable):
-    """Table of relay channel states."""
+    """Table of relay channel states with row navigation and toggle on Enter."""
+
+    # Map row_key → channel index so we can look it up on selection
+    _row_key_to_channel: Dict[str, int]
 
     def on_mount(self) -> None:
+        self._row_key_to_channel = {}
         self.add_columns("Canal", "Pin", "Dispositivo", "Estado")
-        self.cursor_type = "none"
+        self.cursor_type = "row"
         self.zebra_stripes = True
 
     def update_relays(self, state: RelayState) -> None:
+        saved_row = self.cursor_row
         self.clear()
+        self._row_key_to_channel = {}
+
         if state.error:
             self.add_row("--", "--", f"[red]{state.error}[/]", "--")
             return
+
         for ch in range(RELAY_CHANNEL_COUNT):
             name = CHANNEL_NAMES.get(ch, f"Canal {ch}")
             pin = CHANNEL_PINS.get(ch, "?")
@@ -54,22 +85,52 @@ class RelayPanel(DataTable):
                 status_str = "[bold green]ON[/]"
             else:
                 status_str = "[red]OFF[/]"
-            self.add_row(str(ch), pin, name, status_str)
+            row_key = self.add_row(str(ch), pin, name, status_str, key=str(ch))
+            self._row_key_to_channel[str(row_key)] = ch
+
+        # Restore cursor position after refresh
+        if saved_row < self.row_count:
+            self.move_cursor(row=saved_row)
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        event.stop()
+        row_key = str(event.row_key)
+        channel = self._row_key_to_channel.get(row_key)
+        if channel is None:
+            return
+        # Determine current state from the table cell text (strip markup)
+        cell_text = str(self.get_cell_at((event.cursor_row, 3)))
+        is_on: Optional[bool] = None
+        if "ON" in cell_text:
+            is_on = True
+        elif "OFF" in cell_text:
+            is_on = False
+        self.post_message(RelayToggleRequest(
+            channel=channel,
+            current_state=is_on,
+            is_infra=channel in INFRA_CHANNELS,
+        ))
 
 
 # ---------------------------------------------------------------------------
 # Services panel
 # ---------------------------------------------------------------------------
 class ServicesPanel(DataTable):
-    """Table of systemd service states."""
+    """Table of systemd service states with row navigation and action on Enter."""
+
+    _row_key_to_service: Dict[str, str]
 
     def on_mount(self) -> None:
+        self._row_key_to_service = {}
         self.add_columns("Servicio", "Estado")
-        self.cursor_type = "none"
+        self.cursor_type = "row"
         self.zebra_stripes = True
 
     def update_services(self, services: List[ServiceState]) -> None:
+        saved_row = self.cursor_row
         self.clear()
+        self._row_key_to_service = {}
+
         for svc in services:
             status = svc.status
             if status == "active":
@@ -80,32 +141,66 @@ class ServicesPanel(DataTable):
                 styled = "[bold red]failed[/]"
             else:
                 styled = f"[yellow]{status}[/]"
-            self.add_row(svc.name, styled)
+            row_key = self.add_row(svc.name, styled, key=svc.name)
+            self._row_key_to_service[str(row_key)] = svc.name
+
+        if saved_row < self.row_count:
+            self.move_cursor(row=saved_row)
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        event.stop()
+        service_name = self._row_key_to_service.get(str(event.row_key))
+        if service_name:
+            self.post_message(ServiceActionRequest(service_name=service_name))
 
 
 # ---------------------------------------------------------------------------
 # Pools panel
 # ---------------------------------------------------------------------------
-class PoolsPanel(Static):
-    """Shows pool assignments."""
+class PoolsPanel(DataTable):
+    """Navigable table showing DUT → Pool assignment."""
+
+    _row_key_to_dut: Dict[str, str]
+    _dut_to_pool: Dict[str, str]
+
+    def on_mount(self) -> None:
+        self._row_key_to_dut = {}
+        self._dut_to_pool = {}
+        self.add_columns("DUT", "Pool")
+        self.cursor_type = "row"
+        self.zebra_stripes = True
 
     def update_pools(
         self, pools: Dict[str, List[str]], error: str = ""
     ) -> None:
+        saved_row = self.cursor_row
+        self.clear()
+        self._row_key_to_dut = {}
+        self._dut_to_pool = {}
+
         if error:
-            self.update(f"[red]{error}[/]")
+            self.add_row("[red]error[/]", f"[red]{error}[/]")
             return
-        lines = []
+
         for pool_name in ("libremesh", "openwrt"):
             duts = pools.get(pool_name, [])
             color = "green" if pool_name == "libremesh" else "cyan"
-            lines.append(f"[bold {color}]{pool_name}:[/]")
-            if duts:
-                for d in duts:
-                    lines.append(f"  {d}")
-            else:
-                lines.append("  [dim](empty)[/]")
-        self.update("\n".join(lines))
+            pool_styled = f"[bold {color}]{pool_name}[/]"
+            for dut in duts:
+                row_key = self.add_row(dut, pool_styled, key=dut)
+                self._row_key_to_dut[str(row_key)] = dut
+                self._dut_to_pool[dut] = pool_name
+
+        if saved_row < self.row_count:
+            self.move_cursor(row=saved_row)
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        event.stop()
+        dut_name = self._row_key_to_dut.get(str(event.row_key))
+        if not dut_name:
+            return
+        current_pool = self._dut_to_pool.get(dut_name, "")
+        self.post_message(PoolMoveRequest(dut_name=dut_name, current_pool=current_pool))
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +215,7 @@ class DutsPanel(DataTable):
         self.zebra_stripes = True
 
     def update_duts(self, duts: List[DutStatus]) -> None:
+        saved_row = self.cursor_row
         self.clear()
         for d in duts:
             is_poe = "poe" in d.pdu_name.lower()
@@ -157,3 +253,6 @@ class DutsPanel(DataTable):
                 ssh_str,
                 place_str,
             )
+
+        if saved_row < self.row_count:
+            self.move_cursor(row=saved_row)

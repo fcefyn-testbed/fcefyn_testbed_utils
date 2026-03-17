@@ -9,7 +9,7 @@ SWITCH_STATE_FILE = Path.home() / ".config" / "labgrid-switch-state.yaml"
 POOL_CONFIG_PATH = Path(
     os.environ.get(
         "TESTBED_POOL_CONFIG",
-        Path(__file__).resolve().parents[2] / "configs" / "pool-config.yaml",
+        "/etc/testbed/pool-config.yaml",
     )
 )
 
@@ -26,8 +26,8 @@ CHANNEL_NAMES = {
     5: "(sin asignar)",
     6: "(sin asignar)",
     7: "(sin asignar)",
-    8: "Switch TP-Link",
-    9: "Cooler",
+    8: "Cooler",
+    9: "Switch",
     10: "Fuente",
 }
 

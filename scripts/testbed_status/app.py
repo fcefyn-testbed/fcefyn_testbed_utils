@@ -1,26 +1,144 @@
-"""Textual application: layout, keybindings and refresh timers."""
+"""Textual application: layout, keybindings, modals and refresh timers."""
 
 from __future__ import annotations
+
+import asyncio
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Footer, Header, Static
+from textual.screen import ModalScreen
+from textual.widgets import Button, Footer, Header, Static
 
 from . import collectors
-from .config import FAST_REFRESH_SECONDS, SLOW_REFRESH_SECONDS
-from .widgets import DutsPanel, ModeHeader, PoolsPanel, RelayPanel, ServicesPanel
+from .config import CHANNEL_NAMES, FAST_REFRESH_SECONDS, SLOW_REFRESH_SECONDS
+from .widgets import (
+    DutsPanel,
+    ModeHeader,
+    PoolMoveRequest,
+    PoolsPanel,
+    RelayPanel,
+    RelayToggleRequest,
+    ServiceActionRequest,
+    ServicesPanel,
+)
 
 HELP_TEXT = """\
 [bold]testbed-status[/] — TUI de estado del lab FCEFyN
 
-[bold]Keybindings:[/]
+[bold]Navegación:[/]
+  [cyan]Tab / Shift+Tab[/]  Cambiar de panel
+  [cyan]↑ / ↓[/]            Navegar filas
+  [cyan]Enter[/]             Ejecutar acción sobre la fila seleccionada
+
+[bold]Acciones por panel:[/]
+  [cyan]Relés[/]      Enter → toggle ON/OFF (infraestructura pide confirmación)
+  [cyan]Servicios[/]  Enter → start / stop / restart
+  [cyan]Pools[/]      Enter → mover DUT al otro pool
+
+[bold]Atajos:[/]
   [cyan]r[/]   Refresh inmediato
   [cyan]q[/]   Salir
   [cyan]?[/]   Mostrar/ocultar esta ayuda
 """
 
 
+# ---------------------------------------------------------------------------
+# Modal: confirm action (yes / no)
+# ---------------------------------------------------------------------------
+class ConfirmScreen(ModalScreen[bool]):
+    """Generic yes/no confirmation dialog."""
+
+    DEFAULT_CSS = """
+    ConfirmScreen {
+        align: center middle;
+    }
+    #confirm-dialog {
+        width: 60;
+        height: auto;
+        max-height: 12;
+        border: solid $accent;
+        background: $surface;
+        padding: 1 2;
+    }
+    #confirm-buttons {
+        margin-top: 1;
+        height: 3;
+        align: center middle;
+    }
+    #confirm-buttons Button {
+        margin: 0 1;
+    }
+    """
+
+    def __init__(self, prompt: str) -> None:
+        super().__init__()
+        self._prompt = prompt
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="confirm-dialog"):
+            yield Static(self._prompt)
+            with Horizontal(id="confirm-buttons"):
+                yield Button("Sí", variant="success", id="btn-yes")
+                yield Button("No", variant="error", id="btn-no")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.dismiss(event.button.id == "btn-yes")
+
+
+# ---------------------------------------------------------------------------
+# Modal: service action (start / stop / restart)
+# ---------------------------------------------------------------------------
+class ServiceActionScreen(ModalScreen[str]):
+    """Choose an action to run on a systemd service."""
+
+    DEFAULT_CSS = """
+    ServiceActionScreen {
+        align: center middle;
+    }
+    #svc-dialog {
+        width: 50;
+        height: auto;
+        max-height: 14;
+        border: solid $accent;
+        background: $surface;
+        padding: 1 2;
+    }
+    #svc-buttons {
+        margin-top: 1;
+        height: 3;
+        align: center middle;
+    }
+    #svc-buttons Button {
+        margin: 0 1;
+    }
+    """
+
+    def __init__(self, service_name: str) -> None:
+        super().__init__()
+        self._service_name = service_name
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="svc-dialog"):
+            yield Static(
+                f"[bold]Servicio:[/] {self._service_name}\n\nSeleccionar acción:"
+            )
+            with Horizontal(id="svc-buttons"):
+                yield Button("Start", variant="success", id="start")
+                yield Button("Stop", variant="error", id="stop")
+                yield Button("Restart", variant="warning", id="restart")
+                yield Button("Cancelar", id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "cancel":
+            self.dismiss("")
+        else:
+            self.dismiss(event.button.id or "")
+
+
+# ---------------------------------------------------------------------------
+# Help overlay
+# ---------------------------------------------------------------------------
 class HelpOverlay(Static):
     """Modal help text toggled with '?'."""
 
@@ -30,7 +148,7 @@ class HelpOverlay(Static):
         layer: overlay;
         dock: bottom;
         width: 100%;
-        max-height: 12;
+        max-height: 16;
         background: $surface;
         border-top: solid $accent;
         padding: 1 2;
@@ -38,8 +156,11 @@ class HelpOverlay(Static):
     """
 
 
+# ---------------------------------------------------------------------------
+# Main application
+# ---------------------------------------------------------------------------
 class TestbedStatusApp(App):
-    """Read-only TUI dashboard for the FCEFyN HIL testbed."""
+    """Interactive TUI dashboard for the FCEFyN HIL testbed."""
 
     TITLE = "Testbed FCEFyN"
     CSS = """
@@ -126,7 +247,77 @@ class TestbedStatusApp(App):
         )
         self.query_one(DutsPanel).update_duts(dut_statuses)
 
-    # -- Actions -------------------------------------------------------
+    # -- Relay toggle handler ------------------------------------------
+    async def on_relay_toggle_request(self, message: RelayToggleRequest) -> None:
+        channel = message.channel
+        ch_name = CHANNEL_NAMES.get(channel, f"Canal {channel}")
+
+        if message.is_infra:
+            state_label = "ON" if message.current_state else "OFF"
+            prompt = (
+                f"[bold yellow]Canal de infraestructura[/]\n\n"
+                f"¿Toggle [bold]{ch_name}[/] (canal {channel})?\n"
+                f"Estado actual: [bold]{state_label}[/]"
+            )
+
+            def _on_confirm(confirmed: bool) -> None:
+                if confirmed:
+                    asyncio.ensure_future(self._do_relay_toggle(channel))
+
+            self.push_screen(ConfirmScreen(prompt), callback=_on_confirm)
+        else:
+            await self._do_relay_toggle(channel)
+
+    async def _do_relay_toggle(self, channel: int) -> None:
+        success = await collectors.relay_toggle_channel(channel)
+        if not success:
+            self.notify(f"Error al toggle canal {channel}", severity="error")
+        await self._refresh_fast()
+
+    # -- Service action handler ----------------------------------------
+    async def on_service_action_request(self, message: ServiceActionRequest) -> None:
+        svc_name = message.service_name
+
+        def _on_action(action: str) -> None:
+            if action:
+                asyncio.ensure_future(self._do_service_action(svc_name, action))
+
+        self.push_screen(ServiceActionScreen(svc_name), callback=_on_action)
+
+    async def _do_service_action(self, name: str, action: str) -> None:
+        success, output = await collectors.service_action(name, action)
+        if success:
+            self.notify(f"{action} {name}: OK", severity="information")
+        else:
+            self.notify(f"{action} {name}: {output}", severity="error")
+        await self._refresh_fast()
+
+    # -- Pool move handler ---------------------------------------------
+    async def on_pool_move_request(self, message: PoolMoveRequest) -> None:
+        dut = message.dut_name
+        current = message.current_pool
+        target = "openwrt" if current == "libremesh" else "libremesh"
+        prompt = (
+            f"¿Mover [bold]{dut}[/] de [bold]{current}[/] a [bold]{target}[/]?"
+        )
+
+        def _on_confirm(confirmed: bool) -> None:
+            if confirmed:
+                asyncio.ensure_future(self._do_pool_move(dut, target))
+
+        self.push_screen(ConfirmScreen(prompt), callback=_on_confirm)
+
+    async def _do_pool_move(self, dut_name: str, target_pool: str) -> None:
+        success, msg = await asyncio.get_event_loop().run_in_executor(
+            None, collectors.pool_move_dut, dut_name, target_pool
+        )
+        if success:
+            self.notify(msg, severity="information")
+        else:
+            self.notify(f"Error: {msg}", severity="error")
+        await self._refresh_slow()
+
+    # -- Global actions ------------------------------------------------
     async def action_refresh_all(self) -> None:
         await self._refresh_fast()
         await self._refresh_slow()

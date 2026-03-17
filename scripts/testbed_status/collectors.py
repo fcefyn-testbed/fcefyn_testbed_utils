@@ -7,7 +7,7 @@ import json
 import socket
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -340,3 +340,83 @@ def build_dut_statuses(
             place_status=place_status,
         ))
     return statuses
+
+
+# ---------------------------------------------------------------------------
+# Mutators
+# ---------------------------------------------------------------------------
+def _relay_send_sync(command: str) -> bool:
+    """Send a command to the arduino daemon and return True on success."""
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
+            sock.settimeout(3.0)
+            sock.connect(ARDUINO_DAEMON_SOCKET)
+            sock.send(json.dumps({"command": command}).encode("utf-8"))
+            data = sock.recv(4096)
+            resp = json.loads(data.decode("utf-8"))
+            return bool(resp.get("success", False))
+    except Exception:
+        return False
+
+
+async def relay_toggle_channel(channel: int) -> bool:
+    """Toggle a relay channel via the daemon socket."""
+    return await asyncio.get_event_loop().run_in_executor(
+        None, _relay_send_sync, f"TOGGLE {channel}"
+    )
+
+
+async def relay_set_channel(channel: int, state: bool) -> bool:
+    """Explicitly set a relay channel ON or OFF via the daemon socket."""
+    cmd = f"ON {channel}" if state else f"OFF {channel}"
+    return await asyncio.get_event_loop().run_in_executor(
+        None, _relay_send_sync, cmd
+    )
+
+
+async def service_action(name: str, action: str) -> Tuple[bool, str]:
+    """Run a systemctl action on a service. Returns (success, output)."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "sudo", "systemctl", action, name,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate()
+        success = proc.returncode == 0
+        output = ((stdout or b"") + (stderr or b"")).decode().strip()
+        return success, output
+    except Exception as exc:
+        return False, str(exc)
+
+
+def pool_move_dut(dut_name: str, target_pool: str) -> Tuple[bool, str]:
+    """
+    Move dut_name to target_pool in pool-config.yaml.
+    Removes the DUT from all other pools first.
+    """
+    path = Path(POOL_CONFIG_PATH)
+    if not path.exists():
+        return False, f"config file not found: {path}"
+    try:
+        with open(path) as f:
+            data = yaml.safe_load(f)
+
+        pools = data.get("pools", {})
+        for pool_name, pool_data in pools.items():
+            duts = pool_data.get("duts") or []
+            if dut_name in duts:
+                duts.remove(dut_name)
+            pool_data["duts"] = duts
+
+        target = pools.setdefault(target_pool, {})
+        target_duts = target.get("duts") or []
+        if dut_name not in target_duts:
+            target_duts.append(dut_name)
+        target["duts"] = target_duts
+
+        with open(path, "w") as f:
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True)
+        return True, f"moved {dut_name} → {target_pool}"
+    except Exception as exc:
+        return False, str(exc)
