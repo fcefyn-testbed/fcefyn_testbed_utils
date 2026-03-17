@@ -1,17 +1,13 @@
 ---
 # Role: testbed_status
 # Installs the testbed-status TUI dashboard for real-time lab monitoring.
-# Requires: Python 3.8+, pip.
+# Requires: Python 3.8+.
 
-- name: Install textual TUI framework
-  ansible.builtin.pip:
-    name: textual
-    state: present
-    extra_args: --break-system-packages
-
-- name: Ensure PyYAML is installed
+- name: Install textual and PyYAML via apt
   ansible.builtin.apt:
-    name: python3-yaml
+    name:
+      - python3-textual
+      - python3-yaml
     state: present
     update_cache: yes
 
