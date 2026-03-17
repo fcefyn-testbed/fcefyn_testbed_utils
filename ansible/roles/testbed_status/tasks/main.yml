@@ -25,7 +25,8 @@
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../configs/pool-config.yaml"
     dest: /etc/testbed/pool-config.yaml
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
     mode: "0664"
 
 - name: Create testbed_status lib directory
