@@ -281,11 +281,6 @@ class TestbedStatusApp(App):
 
     def _log(self, msg: str) -> None:
         """Add a message to the command log panel."""
-        # #region agent log
-        import json, time
-        with open("/tmp/debug-a6df1c.log", "a") as _f:
-            _f.write(json.dumps({"sessionId": "a6df1c", "hypothesisId": "H3", "location": "app.py:_log", "message": "_log called", "data": {"msg": msg}, "timestamp": int(time.time() * 1000)}) + "\n")
-        # #endregion
         self.query_one(CommandLogPanel).add_log(msg)
 
     # -- Fast refresh: mode, relays, services --------------------------

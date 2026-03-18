@@ -315,11 +315,6 @@ class CommandLogPanel(Static):
         self._refresh_log_display()
 
     def add_log(self, line: str) -> None:
-        # #region agent log
-        import json, time
-        with open("/tmp/debug-a6df1c.log", "a") as _f:
-            _f.write(json.dumps({"sessionId": "a6df1c", "runId": "post-fix-v2", "hypothesisId": "H4-naming-collision", "location": "widgets.py:add_log", "message": "add_log called", "data": {"line": line, "lines_before": len(self._lines), "_expanded": self._expanded}, "timestamp": int(time.time() * 1000)}) + "\n")
-        # #endregion
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
         self._lines.append(f"[dim]{timestamp}[/] {line}")
@@ -328,11 +323,6 @@ class CommandLogPanel(Static):
         self._refresh_log_display()
 
     def _refresh_log_display(self) -> None:
-        # #region agent log
-        import json, time
-        with open("/tmp/debug-a6df1c.log", "a") as _f:
-            _f.write(json.dumps({"sessionId": "a6df1c", "runId": "post-fix-v2", "hypothesisId": "H4-naming-collision", "location": "widgets.py:_refresh_log_display", "message": "_refresh_log_display called", "data": {"_expanded": self._expanded, "lines_count": len(self._lines)}, "timestamp": int(time.time() * 1000)}) + "\n")
-        # #endregion
         if not self._expanded:
             count = len(self._lines)
             hint = f" ({count} entries)" if count else ""
