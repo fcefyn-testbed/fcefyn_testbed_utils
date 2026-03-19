@@ -1,10 +1,17 @@
 # Laboratorio Virtual de LibreMesh con QEMU
 
-Este directorio contiene un script para levantar y administrar una red mesh virtual utilizando QEMU.
+Este directorio contiene scripts para levantar y administrar redes mesh virtuales con QEMU.
+
+| Script | Modo | Uso |
+|--------|------|-----|
+| `libremesh_node.sh` | TAP + bridge | Mesh por cable (eth), requiere `sudo` |
+| `launch_debug_vms.sh` | vwifi + user-mode | Mesh por WiFi simulada (vwifi), sin `sudo` |
 
 El objetivo es proporcionar un entorno de pruebas liviano que permita experimentar con el comportamiento de una red mesh y validar la convergencia de rutas antes de ejecutar pruebas sobre hardware real.
 
 ## Descripción general
+
+### libremesh_node.sh (TAP mode)
 
 El script `libremesh_node.sh` crea una red mesh virtual compuesta por múltiples nodos ejecutando LibreMesh/OpenWrt dentro de máquinas virtuales de QEMU.
 
@@ -125,6 +132,30 @@ sudo ip addr add 10.13.0.10/16 dev br0
 ```
 
 Esta interfaz permitirá que el host se comunique con los nodos virtuales del laboratorio.
+
+---
+
+# launch_debug_vms.sh (vwifi, user-mode)
+
+Levanta VMs con mesh WiFi simulada via [vwifi](https://github.com/Raizo62/vwifi). No requiere `sudo` ni bridge. Útil para debuggear tests el comportamiento observado en tests automatizados.
+
+### Uso
+
+```bash
+# Desde la raíz del repo
+VIRTUAL_MESH_IMAGE=firmwares/qemu/libremesh/lime-viwifi-x86-64-ext4-combined.img ./vms/launch_debug_vms.sh
+```
+
+Variables de entorno: `VIRTUAL_MESH_IMAGE` (requerido), `VIRTUAL_MESH_NODES` (default 2), `VIRTUAL_MESH_BOOT_TIMEOUT`, `VIRTUAL_MESH_CONVERGENCE_WAIT`, `VIRTUAL_MESH_SKIP_VWIFI`.
+
+### SSH
+
+```bash
+ssh -p 2222 root@127.0.0.1  # VM 1
+ssh -p 2223 root@127.0.0.1  # VM 2
+```
+
+Ctrl+C detiene las VMs y vwifi-server.
 
 ---
 
