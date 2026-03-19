@@ -50,6 +50,10 @@ Host dut-librerouter-3
     User root
     ProxyCommand sudo labgrid-dut-proxy librerouter-3 192.168.1.1 22
 
+Host gateway-openwrt
+    HostName 192.168.100.254
+    User root
+
 Host switch-fcefyn
     HostName 192.168.0.1
     User admin
