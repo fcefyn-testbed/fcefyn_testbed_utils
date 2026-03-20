@@ -1,0 +1,56 @@
+site_name: FCEFyN Testbed Utils
+site_description: Documentación del banco de pruebas HIL para OpenWrt y LibreMesh
+docs_dir: docs
+
+theme:
+  name: material
+  language: es
+  features:
+    - navigation.tabs
+    - navigation.top
+    - navigation.sections
+    - search.highlight
+    - search.suggest
+    - toc.integrate
+
+markdown_extensions:
+  - tables
+  - admonition
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - toc:
+      permalink: true
+
+nav:
+  - Inicio: index.md
+  - Operar el lab:
+      - Manual de operación: operar/SOM.md
+      - Rack (referencia rápida): operar/rack-cheatsheets.md
+      - Agregar un DUT: operar/adding-dut-guide.md
+      - Wake-on-LAN: operar/wake-on-lan-setup.md
+      - ZeroTier (acceso remoto): operar/zerotier-acceso.md
+  - Configuración de componentes:
+      - Host: configuracion/host-config.md
+      - Switch: configuracion/switch-config.md
+      - Gateway: configuracion/gateway.md
+      - DUTs: configuracion/duts-config.md
+      - TFTP / dnsmasq: configuracion/tftp-server.md
+      - Arduino relay: configuracion/arduino-relay.md
+      - Ansible / Labgrid: configuracion/ansible-labgrid.md
+      - CI Runner: configuracion/ci-runner.md
+  - Tests y desarrollo:
+      - Enfoque de testing LibreMesh: tests/libremesh-testing-approach.md
+      - DUT proxy por modo: tests/dut-proxy-por-modo.md
+      - SSH dual-mode: tests/ssh-dual-mode-flow.md
+      - Catálogo de firmware CI: tests/ci-firmware-catalog.md
+      - Troubleshooting Labgrid: tests/labgrid-troubleshooting.md
+  - Diseño y propuestas:
+      - Lab híbrido: diseno/hybrid-lab-proposal.md
+      - Tracking lab híbrido: diseno/hybrid-lab-tracking.md
+      - Casos de uso CI: diseno/ci-use-cases-proposal.md
+      - Virtual mesh: diseno/virtual-mesh-proposal.md

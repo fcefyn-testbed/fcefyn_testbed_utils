@@ -73,3 +73,49 @@ Las carcasas originales del Belkin RT3200 eran demasiado grandes para el rack. S
 ---
 
 Los modelos OpenSCAD se imprimen sin soportes cuando se orientan correctamente. Impreso en Creality Ender 3 Pro.
+
+
+# DOCUMENTACIÓN TÉCNICA: CONTROL REMOTO DE RACK (SSH + ARDUINO)
+
+## 1. RESUMEN DEL PROYECTO
+El rack incluye un módulo separado y opcional para la gestión de energía de distintos componentes del rack desde el host.
+
+El control se realiza con el mismo microcontrollador Arduino Nano que comanda al módulo de 8 relés de los DUTs,
+pero en este caso se trata de un módulo de relés SSR (reles de estado solido) para AC de 4 canales (solo se usan 2), el cable que lleva las señales de control
+del arduino hasta el modulo tiene distancia de 2 metros y utiliza cableado estructurado.
+
+## 2. ESPECIFICACIONES DE CARGA (220V AC)
+Se corta únicamente el cable de LÍNEA (Fase - Marrón) para cada dispositivo.
+- Canal 1: Switch TP-Link SG2016P (Seguro, ~145W PoE Máx).
+- Canal 2: Cooler Booster AC (Seguro, 0.09A).
+- IMPORTANTE: No se usa con fuente de 495W por picos de arranque (Inrush Current), ya que estos modulos de reles son de 2A por canal como maximo.
+
+## 3. INFRAESTRUCTURA DE CONTROL (DC)
+- Alimentación Módulo: Cargador externo 5V (Rojo a DC+, Negro a DC-).
+- Distancia: 2 metros mediante cable UTP Cat5e/6.
+- Configuración: Masa común (GND) compartida entre cargador, Arduino y módulo.
+
+### TABLA DE AGRUPACIÓN DE CABLES UTP
+| PAR TRENZADO    | COLOR HILO      | FUNCIÓN       | ORIGEN (ARDUINO) | DESTINO (MÓDULO) |
+|-----------------|-----------------|---------------|------------------|------------------|
+| Par Naranja     | Naranja         | Señal CH1     | Pin Digital (D2) | Borne CH1        |
+|                 | Blanco/Naranja  | GND (Retorno) | Pin GND          | Borne DC-        |
+| Par Verde       | Verde           | Señal CH2     | Pin Digital (D3) | Borne CH2        |
+|                 | Blanco/Verde    | GND (Retorno) | Pin GND          | Borne DC-        |
+| Par Azul        | Azul            | Señal CH3     | Pin Digital (D4) | Borne CH3        |
+|                 | Blanco/Azul     | GND (Retorno) | Pin GND          | Borne DC-        |
+| Par Marrón      | Marrón          | Señal CH4     | Pin Digital (D5) | Borne CH4        |
+|                 | Blanco/Marrón   | GND (Retorno) | Pin GND          | Borne DC-        |
+
+* NOTA: Los 4 hilos blancos se trenzan juntos en ambos extremos para minimizar 
+  interferencias y asegurar el retorno de corriente.
+
+## 4. LÓGICA DE OPERACIÓN (LOW LEVEL TRIGGER)
+El módulo se activa por nivel bajo (0V).
+- digitalWrite(PIN, LOW)  => DISPOSITIVO ENCENDIDO
+- digitalWrite(PIN, HIGH) => DISPOSITIVO APAGADO
+
+## 5. RECOMENDACIONES DE SEGURIDAD
+1. Asegurar que la PC que corre el SSH no dependa del Switch controlado.
+2. No pasar los 2 metros de UTP pegados a cables de alta potencia (220V).
+3. Verificar que los hilos blancos y el negativo del cargador estén unidos.
