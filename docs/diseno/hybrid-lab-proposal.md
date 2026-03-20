@@ -203,19 +203,3 @@ Para reducir tiempos y evitar reconfiguraciones innecesarias, el pool-manager po
 Ya se validó que esto sería posible mediante POCs que consistieron en scripts simples que se conectan por SSH al switch y aplican los comandos válidos (cambio de asignación de puertos a cada vlan, enable/disable de PoE en puertos) para el modelo SG2016P de TPLink.
 El componente ocupado de aplicar configuraciones del switch idealmente deberia ser agnostico al fabricante del switch/comandos validos evitando una solución ad-hoc que se vuelva inutil ante un cambio de switch. Para esto explorariamos soluciones ya existentes como https://github.com/ktbyers/netmiko.
 ---
-
-## 7. Tests LibreMesh
-
-Incluye tests **single-node** (adaptados de openwrt-tests) y **multi-nodo** (L2/L3, batman-adv, babeld, configuración LibreMesh). Enfoque de testing (IP fija vía serial, estrategias de boot): ver [libremesh-testing-approach](../tests/libremesh-testing-approach.md).
-
----
-
-## 8. Referencias y seguimiento
-
-| Documento | Propósito |
-|-----------|-----------|
-| **hybrid-lab-tracking** | Seguimiento de fases de implementación |
-| **SOM** | Manual de operación para administradores |
-| **switch-config** | Configuración del switch y VLANs |
-| **host-config** | Configuración del host de orquestación |
-| **duts-config** | Estado y configuración de cada DUT |

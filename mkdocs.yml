@@ -5,6 +5,17 @@ docs_dir: docs
 theme:
   name: material
   language: es
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Modo oscuro
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Modo claro
   features:
     - navigation.tabs
     - navigation.top
