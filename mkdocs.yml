@@ -41,6 +41,7 @@ nav:
   - Inicio: index.md
   - Operar el lab:
       - Manual de operación: operar/SOM.md
+      - Dashboard testbed-status: operar/testbed-status.md
       - Rack (referencia rápida): operar/rack-cheatsheets.md
       - Agregar un DUT: operar/adding-dut-guide.md
       - Wake-on-LAN: operar/wake-on-lan-setup.md
@@ -65,3 +66,4 @@ nav:
       - Tracking lab híbrido: diseno/hybrid-lab-tracking.md
       - Casos de uso CI: diseno/ci-use-cases-proposal.md
       - Virtual mesh: diseno/virtual-mesh-proposal.md
+      - Rack — diseño 3D: diseno/rack-diseno-3d.md

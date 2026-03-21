@@ -14,7 +14,7 @@ flowchart TB
   R --> scr["scripts\nswitch · arduino · testbed_status · utilidades"]
   R --> fw["firmwares\nimágenes por dispositivo"]
   R --> ard["arduino\nfirmware controlador relés"]
-  R --> rack["rack_design"]
+  R --> parts["3d_parts\nOpenSCAD · STL"]
   R --> vm["vms\nlibremesh_node.sh"]
 
   subgraph tmpl["templates/ (copiar al host)"]
@@ -25,6 +25,8 @@ flowchart TB
 ```
 
 En **templates/**: servicios `arduino-relay-daemon`, `labgrid-exporter-*`, `99-serial-devices.rules`, etc.
+
+**CAD del rack (solo modelos):** carpeta **`3d_parts/`**. Descripción e imágenes: [docs/diseno/rack-diseno-3d.md](docs/diseno/rack-diseno-3d.md).
 
 ---
 
@@ -53,7 +55,7 @@ El playbook despliega exporter, PDUDaemon, dnsmasq, netplan, places.yaml, etc. V
 | `scripts/arduino/arduino_relay_control.py` | Control de relés Arduino (power on/off). Usado por PDUDaemon. |
 | `scripts/arduino/arduino_daemon.py` | Daemon de conexión persistente al Arduino. Servicio `arduino-relay-daemon`. |
 | `scripts/arduino/start_daemon.sh` | Arranque manual del daemon Arduino. |
-| `scripts/testbed_status/` | TUI de estado del lab (modo, relés, servicios, pools, DUTs). Ejecutar: `testbed-status`. |
+| `scripts/testbed_status/` | TUI de estado del lab (modo, relés, servicios, pools, DUTs). Ejecutar: `testbed-status`. Documentación: [docs/operar/testbed-status.md](docs/operar/testbed-status.md). |
 | `scripts/generate_places_yaml.py` | Genera `places.yaml` desde labnet.yaml. |
 | `scripts/provision_mesh_ip.py` | Provisiona 10.13.200.x + ruta 10.13.0.0/16 por serial para SSH en mesh. Ver host-config §3.6. |
 | `scripts/resolve_target.py` | Resuelve target file desde device name. |
