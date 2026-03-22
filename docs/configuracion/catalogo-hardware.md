@@ -69,6 +69,8 @@ Sirve para los canales **0 a 7** (pines **D2-D9** del Arduino): relés electrome
 
 **Cajas de tomas:** Llave Luz Armada Richi Quantum ERA 2 Tomas 3 Módulos Blanco PVC (corte de fase).
 
+![Caja de tomacorriente (referencia en el rack)](../img/hardware/caja-toma.png){: style="max-width: 320px; width: 100%; height: auto; display: block;" }
+
 ## Fuente AC (carga canal 10)
 
 La fuente que alimenta esa rama de **CA** se enchufa detrás del **Fotek**; el papel del canal 10 en el rack se explica en [arduino-relay](arduino-relay.md). Datos de la unidad **Coper Light** metálica:
