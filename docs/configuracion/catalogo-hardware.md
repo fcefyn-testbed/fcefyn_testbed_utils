@@ -65,7 +65,7 @@ La fuente que alimenta esa rama de **CA** se enchufa detrás del **Fotek**; el p
 
 Axial de marco **120 mm** a **220 V** de red en la **base del rack** (no es alimentación 12 V del Arduino). Empuja aire hacia el conducto curvo impreso; el ensamble con piezas 3D está en [Rack del banco de pruebas](../diseno/rack-diseno-3d.md).
 
-![Ventilador Bosser 120 mm (referencia del producto)](../img/hardware/cooler.png){: style="max-width: 420px; width: 100%; height: auto; display: block;" }
+![Ventilador Bosser 120 mm (referencia del producto)](../img/hardware/cooler_bosser.png){: style="max-width: 420px; width: 100%; height: auto; display: block;" }
 
 | Característica | Valor |
 |----------------|-------|
