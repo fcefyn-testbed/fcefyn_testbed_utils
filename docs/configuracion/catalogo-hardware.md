@@ -8,10 +8,10 @@ Parte del equipamiento llegó como **aporte** de fabricantes e instituciones:
 
 | Aportante | Equipamiento |
 |-----------|----------------|
-| **Banana Pi** | Placas **OpenWrt One** y **Banana Pi R4** (y material asociado). |
-| **Nisuta** | **Hub USB** usado en el host (sección Hub). |
-| **AlterMundi** | Unidades **LibreRouter** del proyecto comunitario. |
-| **INTI** (Instituto Nacional de Tecnología Industrial) | Notebook **Lenovo ThinkPad T430** (host); routers **Belkin RT3200**; router gateway **TP-Link TL-WDR3500**. |
+| [**Banana Pi**](https://banana-pi.org/) | Placas **OpenWrt One** y **Banana Pi R4** (y material asociado). |
+| [**Nisuta**](https://nisuta.com/) | **Hub USB** usado en el host (sección Hub). |
+| [**AlterMundi**](https://altermundi.net/) | Unidades **LibreRouter** del proyecto comunitario. |
+| [**INTI**](https://www.argentina.gob.ar/inti) (Instituto Nacional de Tecnología Industrial) | Notebook **Lenovo ThinkPad T430** (host); routers **Belkin RT3200**; router gateway **TP-Link TL-WDR3500**. |
 
 ## Relés Arduino (rack)
 
