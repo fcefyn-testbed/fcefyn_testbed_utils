@@ -2,8 +2,6 @@
 
 Se presentan **imagenes y datos de identificación** del equipamiento físico del banco de pruebas. Para cableado, comandos y configuración conviene ir a las guías enlazadas en cada bloque o en la tabla final.
 
-Las fotos deben estar en el repositorio bajo `docs/img/hardware/` (y el resto bajo `docs/img/…`) para que **GitHub Pages** las publique; si faltan los `.png`/`.jpg`, el sitio mostrará solo el texto alternativo.
-
 ## Relés Arduino (rack)
 
 El Arduino del rack controla la potencia de los DUTs y de parte de la infraestructura; el detalle de canales, UTP, comandos serial y daemon está en [arduino-relay.md](arduino-relay.md).
