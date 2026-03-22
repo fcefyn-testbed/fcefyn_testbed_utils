@@ -52,6 +52,7 @@ nav:
       - Wake-on-LAN: operar/wake-on-lan-setup.md
       - ZeroTier (acceso remoto): operar/zerotier-acceso.md
   - Configuración de componentes:
+      - Catálogo hardware: configuracion/catalogo-hardware.md
       - Host: configuracion/host-config.md
       - Switch: configuracion/switch-config.md
       - Gateway: configuracion/gateway.md

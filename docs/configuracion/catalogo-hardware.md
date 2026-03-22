@@ -2,13 +2,15 @@
 
 Se presentan **imagenes y datos de identificación** del equipamiento físico del banco de pruebas. Para cableado, comandos y configuración conviene ir a las guías enlazadas en cada bloque o en la tabla final.
 
+Las fotos deben estar en el repositorio bajo `docs/img/hardware/` (y el resto bajo `docs/img/…`) para que **GitHub Pages** las publique; si faltan los `.png`/`.jpg`, el sitio mostrará solo el texto alternativo.
+
 ## Relés Arduino (rack)
 
 El Arduino del rack controla la potencia de los DUTs y de parte de la infraestructura; el detalle de canales, UTP, comandos serial y daemon está en [arduino-relay.md](arduino-relay.md).
 
 ### Módulo SSR de 4 canales (Omron G3MB-202P)
 
-<img src="../img/hardware/ssr-omron.png" alt="Módulo SSR de 4 canales Omron G3MB-202P" width="280" style="max-width:100%;height:auto;display:block;" loading="lazy" />
+![Módulo SSR de 4 canales Omron G3MB-202P](../img/hardware/ssr-omron.png){: style="max-width: 280px; width: 100%; height: auto; display: block;" }
 
 En el laboratorio usamos **CH1** para el switch TP-Link SG2016P (canal lógico 8) y **CH2** para el cooler AC (canal 9). Los canales **CH3** y **CH4** quedan libres.
 
@@ -22,7 +24,7 @@ En el laboratorio usamos **CH1** para el switch TP-Link SG2016P (canal lógico 8
 
 ### Fotek SSR-25DA (canal 10)
 
-<img src="../img/hardware/ssr-fotek.png" alt="Fotek SSR-25DA" width="220" style="max-width:100%;height:auto;display:block;" loading="lazy" />
+![Fotek SSR-25DA](../img/hardware/ssr-fotek.png){: style="max-width: 220px; width: 100%; height: auto; display: block;" }
 
 Este relé corta la fase hacia la carga en **CA** del canal 10 (la fuente del rack). En el firmware del Arduino la lógica es **activa en alto** (canal 10: HIGH = ON; canales 0-9: LOW = ON).
 
@@ -34,7 +36,7 @@ Este relé corta la fase hacia la carga en **CA** del canal 10 (la fuente del ra
 
 ### Módulo de 8 relés (DUTs 0-7)
 
-<img src="../img/hardware/8-channel-relay.png" alt="Módulo de 8 relés electromecánicos" width="280" style="max-width:100%;height:auto;display:block;" loading="lazy" />
+![Módulo de 8 relés electromecánicos](../img/hardware/8-channel-relay.png){: style="max-width: 280px; width: 100%; height: auto; display: block;" }
 
 Sirve para los canales **0 a 7** (pines **D2-D9** del Arduino): relés electromecánicos optoacoplados, alimentación **5 V DC**.
 
@@ -50,7 +52,7 @@ Sirve para los canales **0 a 7** (pines **D2-D9** del Arduino): relés electrome
 
 La fuente que alimenta esa rama de **CA** se enchufa detrás del **Fotek**; el papel del canal 10 en el rack se explica en [arduino-relay](arduino-relay.md). Abajo va la ficha de la unidad que usamos (Coper Light metálica).
 
-<img src="../img/hardware/psu.png" alt="Fuente Coper Light metálica" width="260" style="max-width:100%;height:auto;display:block;" loading="lazy" />
+![Fuente Coper Light metálica](../img/hardware/psu.png){: style="max-width: 260px; width: 100%; height: auto; display: block;" }
 
 | Especificación | Valor |
 |----------------|-------|
@@ -65,7 +67,7 @@ La fuente que alimenta esa rama de **CA** se enchufa detrás del **Fotek**; el p
 
 En el host solemos usar un hub de **carcasa metálica** con varios puertos USB 3.0; la foto de referencia del repositorio se llama `hubusb-NSUH113Q.png`.
 
-<img src="../img/hardware/hubusb-NSUH113Q.png" alt="Hub USB 10 puertos USB 3.0 con alimentación" width="280" style="max-width:100%;height:auto;display:block;" loading="lazy" />
+![Hub USB 10 puertos USB 3.0 con alimentación](../img/hardware/hubusb-NSUH113Q.png){: style="max-width: 280px; width: 100%; height: auto; display: block;" }
 
 | Característica | Detalle |
 |----------------|---------|
@@ -85,13 +87,13 @@ Son conversores **USB - UART TTL** para entrar por consola serial a routers y DU
 
 ### CH340
 
-<img src="../img/hardware/usb-ttl-ch340.png" alt="Adaptador USB-TTL con chip CH340" width="260" style="max-width:100%;height:auto;display:block;" loading="lazy" />
+![Adaptador USB-TTL con chip CH340](../img/hardware/usb-ttl-ch340.png){: style="max-width: 260px; width: 100%; height: auto; display: block;" }
 
 Diseño habitual con chip **CH340**; suele ser el más económico. El nivel lógico depende del cable o placa (**3,3 V** o **5 V**). Formato típico: dongle con USB a un lado y pinera o conector a la placa.
 
 ### FTDI FT232RNL (familia FT232)
 
-<img src="../img/hardware/usb-ttl-Ft232rnl.png" alt="Adaptador USB-TTL FT232RNL" width="260" style="max-width:100%;height:auto;display:block;" loading="lazy" />
+![Adaptador USB-TTL FT232RNL](../img/hardware/usb-ttl-Ft232rnl.png){: style="max-width: 260px; width: 100%; height: auto; display: block;" }
 
 Variante con interfaz **FTDI** (en la foto, línea **FT232RNL**). En Linux suele ir bien con los drivers del kernel y resulta cómodo cuando hace falta estabilidad o compatibilidad con herramientas que reconocen bien FTDI.
 
