@@ -1,11 +1,15 @@
+---
+title: Rack
+---
+
 # Rack del banco de pruebas
 
-Sí, construimos un rack custom para nuestro banco de pruebas :sunglasses:. 
+Sí, construimos un rack custom para nuestro banco de pruebas :sunglasses:.
 
 Queríamos poder operar el hardware de forma cómoda y, al mismo tiempo, cuidar el hardware que tenemos, por eso armamos un rack en **torre**, con los DUTs apilados. Para el chasis no fuimos a un rack de datacenter:
 usamos **cajoneras plásticas**, que salieron **mucho más baratas** y alcanzaron para lo que necesitábamos.
 
-<img src="../img/rack/rack.jpeg" alt="Rack en torre con cajoneras plásticas, cableado y equipos por cajón" style="max-width: 480px; width: 100%; height: auto;" />
+![Rack en torre con cajoneras plásticas, cableado y equipos por cajón](../img/rack/rack.jpeg){: style="max-width: 480px; width: 100%; height: auto;" }
 
 *Rack armado en el lab: torre de cajoneras, distribución de cables y DUTs visibles por cajón.*
 
@@ -16,6 +20,8 @@ como una chimenea al revés, con **conductos que diseñamos e imprimimos en 3D**
 Lo que sigue documenta ese diseño en **OpenSCAD / STL**: conducto tipo chimenea, ventilador de 120 mm y piezas auxiliares usadas en el rack, como **carcasas abiertas** para los routers.
 
 Los **archivos CAD** viven en la raíz del repo, carpeta **`3d_parts/`**.
+
+**Referencias:** [Inicio](../index.md) \| **Alimentación infra (SSR, 230 V, UTP):** [arduino-relay](../configuracion/arduino-relay.md)
 
 ---
 
@@ -48,14 +54,14 @@ Abajo usamos un **axial de marco 120 mm** a **220 V** de red (no los 12 V del Ar
 | Alimentación | AC **220 V** |
 | Corriente | 0,09 A |
 | Frecuencia | 50 / 60 Hz |
-| Rodamiento | Ruleman (bola) |
-| Formato | Marco **120 × 120 mm** (serie 12038), altura típica ~38 mm |
+| Rodamiento | Ruleman |
+| Formato | Marco **120 × 120 mm** |
 
-<img src="../img/rack/cooler.png" alt="Ventilador Bosser 120 mm (referencia del producto)" style="max-width: 420px; width: 100%; height: auto;" />
+![Ventilador Bosser 120 mm (referencia del producto)](../img/rack/cooler.png){: style="max-width: 420px; width: 100%; height: auto;" }
 
 El **conducto de admisión curvado** (`curved_intake_duct`) se atornilla a la brida del ventilador (cuatro tornillos) y encaja con la chimenea vertical.
 
-<img src="../img/rack/cooler_with_duct.jpeg" alt="Ventilador con conducto curvo montado" style="max-width: 420px; width: 100%; height: auto;" />
+![Ventilador con conducto curvo montado](../img/rack/cooler_with_duct.jpeg){: style="max-width: 420px; width: 100%; height: auto;" }
 
 ---
 
@@ -65,7 +71,7 @@ El **conducto de admisión curvado** (`curved_intake_duct`) se atornilla a la br
 
 Conducto loft tipo «saxofón» desde la base circular del ventilador de 120 mm hasta el conector rectangular de la chimenea. Flujo suave, sin esquinas internas pronunciadas.
 
-<img src="../img/rack/curved_intake_duct.png" alt="Conducto de admisión curvado" style="max-width: 400px; width: 100%; height: auto;" />
+![Conducto de admisión curvado](../img/rack/curved_intake_duct.png){: style="max-width: 400px; width: 100%; height: auto;" }
 
 **Parámetros (OpenSCAD):**
 
@@ -78,7 +84,7 @@ Conducto loft tipo «saxofón» desde la base circular del ventilador de 120 mm 
 
 Módulo vertical apilable; rejillas («branquias») a ~45° hacia los routers, sin soportes de impresión.
 
-<img src="../img/rack/airflow_chimney_duct_3levels.png" alt="Chimenea 3 niveles" style="max-width: 340px; width: 100%; height: auto; margin-right: 0.5rem;" /> <img src="../img/rack/airflow_chimney_duct_2levels.png" alt="Chimenea 2 niveles" style="max-width: 340px; width: 100%; height: auto;" />
+![Chimenea 3 niveles](../img/rack/airflow_chimney_duct_3levels.png){: style="max-width: 340px; width: 100%; height: auto; margin-right: 0.5rem;" } ![Chimenea 2 niveles](../img/rack/airflow_chimney_duct_2levels.png){: style="max-width: 340px; width: 100%; height: auto;" }
 
 **Parámetros:**
 
@@ -91,13 +97,13 @@ Módulo vertical apilable; rejillas («branquias») a ~45° hacia los routers, s
 
 Tapa con conector hembra para el último segmento.
 
-<img src="../img/rack/chimney_duct_cover.png" alt="Tapa chimenea" style="max-width: 400px; width: 100%; height: auto;" />
+![Tapa chimenea](../img/rack/chimney_duct_cover.png){: style="max-width: 400px; width: 100%; height: auto;" }
 
 ### 4. Base Belkin RT3200 (`belkin_rt3200_base.stl`)
 
 Carcasas originales demasiado voluminosas para el rack; base impresa para ahorrar espacio y fijar cables. Basado en [RT3200/E8450 Wall Mount Case](https://www.thingiverse.com/thing:5864938) (**TuxInvader**): solo la base, parte superior abierta para refrigeración.
 
-<img src="../img/rack/belkin_case_adapted.jpg" alt="Base Belkin adaptada" style="max-width: 420px; width: 100%; height: auto;" />
+![Base Belkin adaptada](../img/rack/belkin_case_adapted.jpg){: style="max-width: 420px; width: 100%; height: auto;" }
 
 ### 5. Carcasa abierta LibreRouter
 
@@ -105,16 +111,22 @@ Base / bandeja **abierta por delante** para el LibreRouter en el rack: fondo ran
 
 **Archivo:** `3d_parts/CE3PRO_librerouter_rack.stl`. El nombre refleja que la orientación y soportes se probaron en **Creality Ender 3 Pro**; en otra impresora conviene revisar adherencia y orientación antes de tirar una pieza larga.
 
-<img src="../img/rack/librerouter-opencase.jpeg" alt="Carcasa abierta impresa para LibreRouter" style="max-width: 420px; width: 100%; height: auto;" />
+![Carcasa abierta impresa para LibreRouter](../img/rack/librerouter-opencase.jpeg){: style="max-width: 420px; width: 100%; height: auto;" }
 
 ### 6. Auxiliares y estética
 
 - **NanoHolderA.stl**: bracket Arduino Nano.
 
-<img src="../img/rack/NanoHolder.jpg" alt="Soporte Nano" style="max-width: 320px; width: 100%; height: auto;" />
+![Soporte Nano](../img/rack/NanoHolder.jpg){: style="max-width: 320px; width: 100%; height: auto;" }
 
 - **Logos** FCEFyN y UNC.
 
-<img src="../img/rack/logos.png" alt="Logos FCEFyN y UNC" style="max-width: 360px; width: 100%; height: auto;" />
+![Logos FCEFyN y UNC](../img/rack/logos.png){: style="max-width: 360px; width: 100%; height: auto;" }
+
+---
+
+## Impresión
+
+Modelos OpenSCAD orientados para imprimir **sin soportes** cuando corresponde. Referencia de equipo: Creality Ender 3 Pro.
 
 ---

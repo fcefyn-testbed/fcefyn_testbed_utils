@@ -1,5 +1,6 @@
 site_name: FCEFyN Testbed Utils
 site_description: Documentación del banco de pruebas HIL para OpenWrt y LibreMesh
+site_url: https://ccasanueva7.github.io/fcefyn_testbed_utils/
 docs_dir: docs
 
 theme:
@@ -25,6 +26,7 @@ theme:
     - toc.integrate
 
 markdown_extensions:
+  - attr_list
   - tables
   - admonition
   - pymdownx.superfences:
@@ -69,4 +71,4 @@ nav:
       - Tracking lab híbrido: diseno/hybrid-lab-tracking.md
       - Casos de uso CI: diseno/ci-use-cases-proposal.md
       - Virtual mesh: diseno/virtual-mesh-proposal.md
-      - Rack — diseño 3D: diseno/rack-diseno-3d.md
+      - Rack: diseno/rack-diseno-3d.md
