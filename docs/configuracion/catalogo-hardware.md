@@ -61,6 +61,25 @@ La fuente que alimenta esa rama de **CA** se enchufa detrás del **Fotek**; el p
 | Temperatura de funcionamiento | 0-40 °C |
 | Protección | Cortocircuito |
 
+## Ventilador Bosser 120 mm (rack)
+
+Axial de marco **120 mm** a **220 V** de red en la **base del rack** (no es alimentación 12 V del Arduino). Empuja aire hacia el conducto curvo impreso; el ensamble con piezas 3D está en [Rack del banco de pruebas](../diseno/rack-diseno-3d.md).
+
+![Ventilador Bosser 120 mm (referencia del producto)](../img/hardware/cooler.png){: style="max-width: 420px; width: 100%; height: auto; display: block;" }
+
+| Característica | Valor |
+|----------------|-------|
+| Marca | Bosser |
+| Línea | Coolers 220 V |
+| Modelo | **CBO-12038B-220** |
+| Alimentación | AC **220 V** |
+| Corriente | 0,09 A |
+| Frecuencia | 50 / 60 Hz |
+| Rodamiento | Ruleman |
+| Formato | Marco **120 × 120 mm** |
+
+En el lab el encendido del cooler va por **SSR** (canal 9); detalle en [arduino-relay](arduino-relay.md).
+
 ## Hub USB
 
 En el host solemos usar un hub de **carcasa metálica** con varios puertos USB 3.0; la foto de referencia del repositorio se llama `hubusb-NSUH113Q.png`.
