@@ -239,13 +239,3 @@ Si `VIRTUAL_MESH_NODES > VIRTUAL_MESH_MAX_NODES`: error al inicio con mensaje in
 - Añadir job `virtual-mesh-smoke`: 2 nodos, self-hosted, regresión rápida sin hardware físico.
 
 ---
-
-## 8. Orden de Implementación
-
-1. **Documento** (este): virtual-mesh-proposal.md
-2. **Playbook testbed** (fcefyn_testbed_utils): `ansible/playbook_testbed.yml --tags virtual_mesh` instala vwifi, QEMU y mac80211_hwsim en el host de orquestración. Ejecutar antes de probar tests virtuales localmente o en el runner self-hosted.
-3. **Fase 1**: virtual_mesh_launcher.py + imagen/dependencias documentadas
-4. **Fase 2**: Fixture mesh_nodes_virtual + integración en test_mesh.py
-5. **Fase 3**: virtual-mesh.yml + job en daily.yml
-
----
