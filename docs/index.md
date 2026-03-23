@@ -34,9 +34,7 @@ El diagrama anterior resume la topología: host, switch, gateway y rack.
 
 ## Cómo seguir
 
-| Perfil | Empezar por | Luego |
-|--------|-------------|-------|
+| Perfil | Empezar por | Luego                                                                                                                                              |
+|--------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Administrador del lab** | [Manual de operación](operar/SOM.md) | [Dashboard testbed-status](operar/testbed-status.md), [Rack cheatsheets](operar/rack-cheatsheets.md), [Agregar un DUT](operar/adding-dut-guide.md) |
-| **Revisor o colaborador** | [Propuesta lab híbrido](diseno/hybrid-lab-proposal.md) | [Tracking](diseno/hybrid-lab-tracking.md), [CI](diseno/ci-use-cases-proposal.md) |
-| **Desarrollador (tests)** | [Enfoque de testing](tests/libremesh-testing-approach.md) | [Manual de operación](operar/SOM.md) para ejecución en el lab |
-
+| **Revisor o colaborador** | [Propuesta lab híbrido](diseno/hybrid-lab-proposal.md) | [CI-usecases-proposal](diseno/ci-use-cases-proposal.md)                                                                                            |
