@@ -7,7 +7,7 @@ theme:
   name: material
   custom_dir: overrides
   language: es
-  logo: img/logos/testbed_logo_no_background.png
+  logo: img/logos/logo-testbed.svg
   palette:
     - scheme: default
       primary: indigo
