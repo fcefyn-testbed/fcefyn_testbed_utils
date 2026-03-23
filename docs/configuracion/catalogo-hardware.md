@@ -86,7 +86,7 @@ La fuente que alimenta esa rama de **CA** se enchufa detrás del **Fotek**; el p
 | Temperatura de funcionamiento | 0-40 °C |
 | Protección | Cortocircuito |
 
-## Ventilador Bosser 120 mm (rack)
+## Ventilador AC Bosser 120 mm
 
 Axial de marco **120 mm** a **220 V** de red en la **base del rack** (no es alimentación 12 V del Arduino). Empuja aire hacia el conducto curvo impreso; el ensamble con piezas 3D está en [Rack del banco de pruebas](../diseno/rack-diseno-3d.md).
 
