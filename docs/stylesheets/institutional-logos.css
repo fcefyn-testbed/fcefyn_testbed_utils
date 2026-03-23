@@ -1,3 +1,51 @@
+/*
+ * Site logo in header / drawer (theme.logo).
+ * 1) Full-width header row so the logo sits at the left edge of the blue bar (not in a centered column).
+ * 2) Larger image than Material defaults.
+ */
+
+/* Drop centered "md-grid" cap on the header strip so nothing sits in empty margin on wide screens */
+.md-header__inner.md-grid {
+  margin-inline: 0;
+  max-width: none;
+  padding-inline: 0.5rem 0.75rem;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+@media (min-width: 60em) {
+  .md-header__inner.md-grid {
+    padding-inline: 0.65rem 1rem;
+  }
+}
+
+.md-header__button.md-logo {
+  flex-shrink: 0;
+  width: auto;
+  max-width: min(55vw, 18rem);
+  padding: 0.2rem 0.45rem 0.2rem 0.15rem;
+  margin-right: 0.15rem;
+}
+
+.md-header__button.md-logo img,
+.md-nav__button.md-logo img {
+  display: block;
+  height: 3.5rem;
+  width: auto;
+  max-height: 4.25rem;
+  object-fit: contain;
+}
+
+.md-nav__button.md-logo {
+  width: auto;
+  justify-content: flex-start;
+}
+
+.md-nav__button.md-logo img {
+  height: 3rem;
+  max-height: 3.5rem;
+}
+
 /* Compact institutional strip above the site footer; keeps logos small and unobtrusive. */
 
 .md-institutional-bar {
