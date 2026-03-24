@@ -1,0 +1,133 @@
+---
+# Role: observability
+# Installs and configures Prometheus + Grafana + autossh tunnel for DUT metrics.
+#
+# The metrics endpoint on each DUT (prometheus-node-exporter-lua) is exposed
+# via a persistent SSH tunnel (autossh) that uses the dut-openwrt-one SSH alias.
+# labgrid-dut-proxy routes the tunnel through the correct VLAN/IP regardless of
+# the active testbed mode (openwrt-only / libremesh-only / hybrid).
+#
+# Prerequisites on the OpenWrt One (manual, one-time via SSH — see docs/diseno/poc-observabilidad.md):
+#   opkg install prometheus-node-exporter-lua prometheus-node-exporter-lua-openwrt
+#   uci set prometheus-node-exporter-lua.main.listen_interface='loopback'
+#   uci commit prometheus-node-exporter-lua
+#   /etc/init.d/prometheus-node-exporter-lua enable && /etc/init.d/prometheus-node-exporter-lua start
+
+# -------------------------------------------------------------------------
+# autossh — keep the metrics SSH tunnel to the DUT alive
+# -------------------------------------------------------------------------
+
+- name: Install autossh
+  ansible.builtin.apt:
+    name: autossh
+    state: present
+    update_cache: yes
+
+- name: Deploy dut-metrics-tunnel systemd unit
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../configs/systemd/dut-metrics-tunnel-openwrt-one.service"
+    dest: /etc/systemd/system/dut-metrics-tunnel-openwrt-one.service
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart metrics tunnel
+
+- name: Enable and start dut-metrics-tunnel service
+  ansible.builtin.systemd:
+    name: dut-metrics-tunnel-openwrt-one
+    enabled: yes
+    state: started
+    daemon_reload: yes
+
+# -------------------------------------------------------------------------
+# Prometheus — scrape and store DUT metrics
+# -------------------------------------------------------------------------
+
+- name: Install prometheus
+  ansible.builtin.apt:
+    name: prometheus
+    state: present
+    update_cache: yes
+
+- name: Add openwrt-one scrape job to prometheus.yml
+  ansible.builtin.blockinfile:
+    path: /etc/prometheus/prometheus.yml
+    marker: "# {mark} ANSIBLE MANAGED — openwrt-one DUT metrics"
+    block: |
+        - job_name: 'openwrt-one'
+          scrape_interval: 30s
+          scrape_timeout: 10s
+          static_configs:
+            - targets: ['127.0.0.1:19100']
+              labels:
+                dut: 'openwrt-one'
+                firmware: 'openwrt-24.10.5'
+                target: 'mediatek-filogic'
+    insertafter: "^scrape_configs:"
+  notify: Restart prometheus
+
+- name: Enable and start prometheus
+  ansible.builtin.systemd:
+    name: prometheus
+    enabled: yes
+    state: started
+
+# -------------------------------------------------------------------------
+# Grafana — visualize DUT metrics
+# -------------------------------------------------------------------------
+
+- name: Install dependencies for Grafana APT repo
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - software-properties-common
+      - gnupg
+    state: present
+
+- name: Add Grafana APT key
+  ansible.builtin.apt_key:
+    url: "https://apt.grafana.com/gpg.key"
+    state: present
+
+- name: Add Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://apt.grafana.com stable main"
+    filename: grafana
+    state: present
+
+- name: Install grafana
+  ansible.builtin.apt:
+    name: grafana
+    state: present
+    update_cache: yes
+
+- name: Create Grafana provisioning datasources directory
+  ansible.builtin.file:
+    path: /etc/grafana/provisioning/datasources
+    state: directory
+    owner: root
+    group: grafana
+    mode: "0750"
+
+- name: Provision Prometheus datasource in Grafana
+  ansible.builtin.copy:
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://127.0.0.1:9090
+          access: proxy
+          isDefault: true
+          editable: false
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Enable and start grafana-server
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: yes
+    state: started
