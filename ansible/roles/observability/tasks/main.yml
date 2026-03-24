@@ -1,20 +1,22 @@
 ---
 # Role: observability
-# Installs and configures Prometheus + Grafana + autossh tunnel for DUT metrics.
+# Installs and configures Prometheus + Grafana + autossh tunnels for DUT metrics.
 #
-# The metrics endpoint on each DUT (prometheus-node-exporter-lua) is exposed
-# via a persistent SSH tunnel (autossh) that uses the dut-openwrt-one SSH alias.
-# labgrid-dut-proxy routes the tunnel through the correct VLAN/IP regardless of
-# the active testbed mode (openwrt-only / libremesh-only / hybrid).
+# Each DUT in observability_duts (defaults/main.yml) gets:
+#   - a systemd autossh tunnel unit forwarding DUT loopback:remote_port → host:local_port
+#   - a Prometheus scrape job fragment in /etc/prometheus/jobs.d/<name>.yml
 #
-# Prerequisites on the OpenWrt One (manual, one-time via SSH — see docs/diseno/poc-observabilidad.md):
+# The SSH tunnel uses the dut-<name> SSH alias from ~/.ssh/config, which
+# labgrid-dut-proxy resolves to the correct VLAN/IP regardless of testbed mode.
+#
+# Prerequisite per DUT (manual, one-time — see docs/configuracion/observabilidad.md):
 #   opkg install prometheus-node-exporter-lua prometheus-node-exporter-lua-openwrt
 #   uci set prometheus-node-exporter-lua.main.listen_interface='loopback'
 #   uci commit prometheus-node-exporter-lua
 #   /etc/init.d/prometheus-node-exporter-lua enable && /etc/init.d/prometheus-node-exporter-lua start
 
 # -------------------------------------------------------------------------
-# autossh — keep the metrics SSH tunnel to the DUT alive
+# autossh — keep metrics SSH tunnels to DUTs alive
 # -------------------------------------------------------------------------
 
 - name: Install autossh
@@ -23,21 +25,23 @@
     state: present
     update_cache: yes
 
-- name: Deploy dut-metrics-tunnel systemd unit
-  ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../configs/systemd/dut-metrics-tunnel-openwrt-one.service"
-    dest: /etc/systemd/system/dut-metrics-tunnel-openwrt-one.service
+- name: Deploy metrics tunnel systemd unit per DUT
+  ansible.builtin.template:
+    src: dut-metrics-tunnel.service.j2
+    dest: "/etc/systemd/system/dut-metrics-tunnel-{{ item.name }}.service"
     mode: "0644"
+  loop: "{{ observability_duts }}"
   notify:
     - Reload systemd
-    - Restart metrics tunnel
+    - Restart metrics tunnels
 
-- name: Enable and start dut-metrics-tunnel service
+- name: Enable and start metrics tunnel per DUT
   ansible.builtin.systemd:
-    name: dut-metrics-tunnel-openwrt-one
+    name: "dut-metrics-tunnel-{{ item.name }}"
     enabled: yes
     state: started
     daemon_reload: yes
+  loop: "{{ observability_duts }}"
 
 # -------------------------------------------------------------------------
 # Prometheus — scrape and store DUT metrics
@@ -49,8 +53,9 @@
     state: present
     update_cache: yes
 
-# Deploy a full prometheus.yml from template (avoids blockinfile YAML indent bugs).
-# scrape_config_files points to jobs.d/openwrt-one.yml; the main file has no DUT jobs.
+# Full prometheus.yml from template: avoids blockinfile YAML indent issues.
+# scrape_config_files uses a glob (jobs.d/*.yml) so adding a DUT only
+# requires deploying a new fragment; the main config is never touched.
 
 - name: Deploy prometheus.yml from template
   ansible.builtin.template:
@@ -70,13 +75,14 @@
     group: prometheus
     mode: "0755"
 
-- name: Deploy openwrt-one scrape job fragment
-  ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../configs/prometheus/openwrt-one-poc.yml"
-    dest: /etc/prometheus/jobs.d/openwrt-one.yml
+- name: Deploy scrape job fragment per DUT
+  ansible.builtin.template:
+    src: dut-scrape-job.yml.j2
+    dest: "/etc/prometheus/jobs.d/{{ item.name }}.yml"
     owner: prometheus
     group: prometheus
     mode: "0644"
+  loop: "{{ observability_duts }}"
   notify: Restart prometheus
 
 - name: Enable and start prometheus

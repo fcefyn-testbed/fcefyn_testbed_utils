@@ -3,10 +3,11 @@
   ansible.builtin.systemd:
     daemon_reload: yes
 
-- name: Restart metrics tunnel
+- name: Restart metrics tunnels
   ansible.builtin.systemd:
-    name: dut-metrics-tunnel-openwrt-one
+    name: "dut-metrics-tunnel-{{ item.name }}"
     state: restarted
+  loop: "{{ observability_duts }}"
 
 - name: Restart prometheus
   ansible.builtin.systemd:
