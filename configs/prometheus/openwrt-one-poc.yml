@@ -1,25 +1,23 @@
-# Prometheus scrape job — OpenWrt One PoC observability
+# OpenWrt One PoC — fragmento para scrape_config_files
 #
-# This snippet is merged into /etc/prometheus/prometheus.yml on the host.
-# The metrics endpoint is exposed via an SSH tunnel (dut-metrics-tunnel-openwrt-one.service),
-# so Prometheus always scrapes localhost regardless of the active testbed mode
-# (openwrt-only / libremesh-only / hybrid). The tunnel uses the SSH alias
-# dut-openwrt-one, which labgrid-dut-proxy routes to the correct VLAN/IP per mode.
+# Ansible copia este archivo a /etc/prometheus/jobs.d/openwrt-one.yml y registra
+# scrape_config_files en /etc/prometheus/prometheus.yml (no se pega el job dentro
+# de scrape_configs: para evitar errores de indentación con blockinfile).
 #
-# Prerequisites on the OpenWrt One (persistent, surviving reboots):
+# Métricas vía túnel SSH: dut-metrics-tunnel-openwrt-one.service → 127.0.0.1:19100
+#
+# En el DUT (una vez):
 #   opkg install prometheus-node-exporter-lua prometheus-node-exporter-lua-openwrt
 #   uci set prometheus-node-exporter-lua.main.listen_interface='loopback'
 #   uci commit prometheus-node-exporter-lua
-#   /etc/init.d/prometheus-node-exporter-lua enable
-#   /etc/init.d/prometheus-node-exporter-lua start
+#   /etc/init.d/prometheus-node-exporter-lua enable && /etc/init.d/prometheus-node-exporter-lua start
 
-scrape_configs:
-  - job_name: 'openwrt-one'
-    scrape_interval: 30s
-    scrape_timeout: 10s
-    static_configs:
-      - targets: ['127.0.0.1:19100']
-        labels:
-          dut: 'openwrt-one'
-          firmware: 'openwrt-24.10.5'
-          target: 'mediatek-filogic'
+- job_name: 'openwrt-one'
+  scrape_interval: 30s
+  scrape_timeout: 10s
+  static_configs:
+    - targets: ['127.0.0.1:19100']
+      labels:
+        dut: 'openwrt-one'
+        firmware: 'openwrt-24.10.5'
+        target: 'mediatek-filogic'

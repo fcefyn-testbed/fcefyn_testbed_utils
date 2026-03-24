@@ -49,21 +49,41 @@
     state: present
     update_cache: yes
 
-- name: Add openwrt-one scrape job to prometheus.yml
+# Inline jobs under scrape_configs: via blockinfile break YAML: Ansible's literal
+# block strips common indentation, so "- job_name" loses the two spaces Prometheus needs.
+# Use scrape_config_files + a dedicated fragment (list of jobs) instead.
+
+- name: Remove legacy inline openwrt-one block from prometheus.yml (if present)
   ansible.builtin.blockinfile:
     path: /etc/prometheus/prometheus.yml
     marker: "# {mark} ANSIBLE MANAGED — openwrt-one DUT metrics"
+    state: absent
+
+- name: Ensure Prometheus jobs.d directory exists
+  ansible.builtin.file:
+    path: /etc/prometheus/jobs.d
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: "0755"
+
+- name: Deploy openwrt-one scrape job fragment
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../configs/prometheus/openwrt-one-poc.yml"
+    dest: /etc/prometheus/jobs.d/openwrt-one.yml
+    owner: prometheus
+    group: prometheus
+    mode: "0644"
+  notify: Restart prometheus
+
+- name: Register jobs.d fragment in prometheus.yml (scrape_config_files)
+  ansible.builtin.blockinfile:
+    path: /etc/prometheus/prometheus.yml
+    marker: "# {mark} ANSIBLE MANAGED — scrape_config_files openwrt-one PoC"
     block: |
-      - job_name: 'openwrt-one'
-        scrape_interval: 30s
-        scrape_timeout: 10s
-        static_configs:
-          - targets: ['127.0.0.1:19100']
-            labels:
-              dut: 'openwrt-one'
-              firmware: 'openwrt-24.10.5'
-              target: 'mediatek-filogic'
-    insertafter: "^scrape_configs:"
+      scrape_config_files:
+        - /etc/prometheus/jobs.d/openwrt-one.yml
+    insertbefore: "^scrape_configs:"
   notify: Restart prometheus
 
 - name: Enable and start prometheus
