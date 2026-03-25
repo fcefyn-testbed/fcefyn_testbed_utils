@@ -152,6 +152,44 @@
     state: started
 
 # -------------------------------------------------------------------------
+# Grafana dashboard provisioning — file-based provider + versioned JSONs
+# -------------------------------------------------------------------------
+
+- name: Create Grafana provisioning dashboards directory
+  ansible.builtin.file:
+    path: /etc/grafana/provisioning/dashboards
+    state: directory
+    owner: root
+    group: grafana
+    mode: "0750"
+
+- name: Create Grafana provisioning dashboards JSON directory
+  ansible.builtin.file:
+    path: /etc/grafana/provisioning/dashboards/json
+    state: directory
+    owner: root
+    group: grafana
+    mode: "0750"
+
+- name: Deploy Grafana dashboard file provider
+  ansible.builtin.template:
+    src: grafana-dashboards-provider.yml.j2
+    dest: /etc/grafana/provisioning/dashboards/dashboards.yml
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Deploy orchestrator host dashboard JSON
+  ansible.builtin.copy:
+    src: dashboards/orchestrator-node.json
+    dest: /etc/grafana/provisioning/dashboards/json/orchestrator-node.json
+    owner: root
+    group: grafana
+    mode: "0640"
+  notify: Restart grafana
+
+# -------------------------------------------------------------------------
 # Grafana config — grafana.ini settings (security, URL, registration)
 # -------------------------------------------------------------------------
 
@@ -190,6 +228,49 @@
     value: "{{ grafana_config.allow_sign_up }}"
     mode: "0640"
   notify: Restart grafana
+
+# -------------------------------------------------------------------------
+# Orchestrator node exporter — metrics from the orchestration host itself
+# -------------------------------------------------------------------------
+# Listens only on 127.0.0.1 so metrics are not exposed on the lab LAN.
+# Prometheus scrapes it via the jobs.d fragment (same mechanism as DUTs).
+
+- name: Install prometheus-node-exporter on orchestration host
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+    update_cache: yes
+  when: orchestrator_node_exporter.enabled | default(false)
+
+- name: Configure prometheus-node-exporter listen address
+  ansible.builtin.copy:
+    content: |
+      # Managed by Ansible (observability role). Do not edit manually.
+      ARGS='--web.listen-address={{ orchestrator_node_exporter.listen_address }}:{{ orchestrator_node_exporter.listen_port }}'
+    dest: /etc/default/prometheus-node-exporter
+    owner: root
+    group: root
+    mode: "0644"
+  when: orchestrator_node_exporter.enabled | default(false)
+  notify: Restart prometheus-node-exporter
+
+- name: Enable and start prometheus-node-exporter
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: orchestrator_node_exporter.enabled | default(false)
+
+- name: Deploy orchestrator scrape job fragment
+  ansible.builtin.template:
+    src: orchestrator-scrape-job.yml.j2
+    dest: "/etc/prometheus/jobs.d/{{ orchestrator_node_exporter.scrape_job_name }}.yml"
+    owner: prometheus
+    group: prometheus
+    mode: "0644"
+  when: orchestrator_node_exporter.enabled | default(false)
+  notify: Restart prometheus
 
 # -------------------------------------------------------------------------
 # Grafana public tunnel — reverse SSH to Oracle VPS (optional)

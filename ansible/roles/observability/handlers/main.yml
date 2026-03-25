@@ -19,6 +19,11 @@
     name: grafana-server
     state: restarted
 
+- name: Restart prometheus-node-exporter
+  ansible.builtin.systemd:
+    name: prometheus-node-exporter
+    state: restarted
+
 - name: Restart grafana reverse tunnel
   ansible.builtin.systemd:
     name: grafana-reverse-tunnel

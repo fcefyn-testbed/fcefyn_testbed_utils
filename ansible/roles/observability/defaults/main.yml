@@ -87,6 +87,19 @@ grafana_public_tunnel:
   ssh_alias: oracle-vps
   grafana_port: 3000
 
+# Prometheus node exporter on the orchestration host.
+# Listens only on loopback to avoid exposing metrics on the lab LAN.
+# label dut matches the Grafana dashboard variable so the host appears
+# alongside DUTs in the same dashboard.
+orchestrator_node_exporter:
+  enabled: true
+  listen_address: "127.0.0.1"
+  listen_port: 9100
+  scrape_job_name: orchestrator-host
+  labels:
+    dut: lab-orchestrator
+    role: orchestration-host
+
 # Grafana server settings applied to /etc/grafana/grafana.ini.
 grafana_config:
   root_url: "https://fcefyn-testbed.duckdns.org/"
