@@ -150,3 +150,67 @@
     name: grafana-server
     enabled: yes
     state: started
+
+# -------------------------------------------------------------------------
+# Grafana config — grafana.ini settings (security, URL, registration)
+# -------------------------------------------------------------------------
+
+- name: Configure grafana.ini - root_url
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: server
+    option: root_url
+    value: "{{ grafana_config.root_url }}"
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Configure grafana.ini - cookie_secure
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: security
+    option: cookie_secure
+    value: "{{ grafana_config.cookie_secure }}"
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Configure grafana.ini - cookie_samesite
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: security
+    option: cookie_samesite
+    value: "{{ grafana_config.cookie_samesite }}"
+    mode: "0640"
+  notify: Restart grafana
+
+- name: Configure grafana.ini - allow_sign_up
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: users
+    option: allow_sign_up
+    value: "{{ grafana_config.allow_sign_up }}"
+    mode: "0640"
+  notify: Restart grafana
+
+# -------------------------------------------------------------------------
+# Grafana public tunnel — reverse SSH to Oracle VPS (optional)
+# -------------------------------------------------------------------------
+# Prerequisite: Host oracle-vps entry in ~/.ssh/config on the lab host.
+# Activate by setting grafana_public_tunnel.enabled: true in defaults/main.yml.
+
+- name: Deploy Grafana public reverse tunnel unit
+  ansible.builtin.template:
+    src: grafana-reverse-tunnel.service.j2
+    dest: /etc/systemd/system/grafana-reverse-tunnel.service
+    mode: "0644"
+  when: grafana_public_tunnel.enabled | default(false)
+  notify:
+    - Reload systemd
+    - Restart grafana reverse tunnel
+
+- name: Enable and start Grafana public reverse tunnel
+  ansible.builtin.systemd:
+    name: grafana-reverse-tunnel
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  when: grafana_public_tunnel.enabled | default(false)

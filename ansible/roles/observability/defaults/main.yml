@@ -78,3 +78,18 @@ observability_duts:
       dut: librerouter-1
       firmware: librerouteros-23.05-libremesh
       target: ipq4019
+
+# Reverse SSH tunnel: exposes Grafana publicly via Oracle VPS.
+# Requires Host oracle-vps in ~/.ssh/config on the lab host (manual prerequisite).
+# Set enabled: true to deploy and start the unit.
+grafana_public_tunnel:
+  enabled: false
+  ssh_alias: oracle-vps
+  grafana_port: 3000
+
+# Grafana server settings applied to /etc/grafana/grafana.ini.
+grafana_config:
+  root_url: "https://fcefyn-testbed.duckdns.org/"
+  cookie_secure: "true"
+  cookie_samesite: "lax"
+  allow_sign_up: "false"
