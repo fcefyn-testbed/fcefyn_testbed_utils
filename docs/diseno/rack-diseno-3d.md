@@ -1,31 +1,68 @@
 ---
-title: Rack
+title: Rack físico
 ---
 
-# Rack del banco de pruebas
+# Rack físico
 
-Sí, construimos un rack custom para nuestro banco de pruebas :sunglasses:.
+Vista general del **rack en torre** del lab: cajoneras, caja de control, enlace a esquemáticos eléctricos en [arduino-relay](../configuracion/arduino-relay.md) y piezas impresas para conductos y soportes. Fuentes CAD: carpeta **`3d_parts/`** en la raíz del repo (OpenSCAD homónimo del STL cuando aplica).
 
-Queríamos poder operar el hardware de forma cómoda y, al mismo tiempo, cuidar el hardware que tenemos, por eso armamos un rack en **torre**, con los DUTs apilados. Para el chasis no fuimos a un rack de datacenter:
-usamos **cajoneras plásticas**, que salieron **mucho más baratas** y alcanzaron para lo que necesitábamos.
+## Fotos del rack
 
-![Rack en torre con cajoneras plásticas, cableado y equipos por cajón](../img/rack/rack.jpeg){: style="max-width: 480px; width: 100%; height: auto;" }
+<div class="rack-gallery" data-rack-gallery tabindex="0">
+  <div class="rack-gallery__viewport">
+    <figure class="rack-gallery__slide" data-caption="Vista general del rack en torre: cajoneras, cableado y equipos por cajón.">
+      <img src="../../img/rack/rack.png" alt="Rack en torre con cajoneras plásticas y cableado" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Montaje inicial en mesa: routers, hub USB, relés y cableado antes de integrar al rack.">
+      <img src="../../img/rack/starting_point.jpg" alt="Banco de pruebas en mesa con routers y relés" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Interior de un cajón: hub USB, módulo de relés y distribución de cables.">
+      <img src="../../img/rack/rack_2nd_level.jpg" alt="Cajón del rack con hub USB y relés" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Cajones superiores abiertos: fuente, hub y cableado entre niveles.">
+      <img src="../../img/rack/rack_1st_2nd_level.jpg" alt="Dos niveles del rack abiertos con fuente y cableado" loading="lazy" decoding="async">
+    </figure>
+    <div class="rack-gallery__overlay">
+      <span class="rack-gallery__counter" data-rack-counter aria-live="polite"></span>
+      <button type="button" class="rack-gallery__btn" data-rack-prev aria-label="Imagen anterior">&#8249;</button>
+      <button type="button" class="rack-gallery__btn" data-rack-next aria-label="Imagen siguiente">&#8250;</button>
+    </div>
+  </div>
+  <p class="rack-gallery__caption" data-rack-caption></p>
+</div>
 
-*Rack armado en el lab: torre de cajoneras, distribución de cables y DUTs visibles por cajón.*
+## Caja de control (módulo de relés)
 
-El problema era que, con todo apilado, el aire caliente de abajo **sube** y se estanca arriba; los equipos de los niveles superiores
-la pasan peor y el riesgo de dañarlos por sobre calentamiento aumenta. La salida que se nos ocurrió fue sumar un **ventilador abajo** y empujar aire **frío de abajo hacia arriba**,
-como una chimenea al revés, con **conductos que diseñamos e imprimimos en 3D** para que el flujo **esté bien dirigido**.
+Caja aparte del rack: relés/SSR, **UTP** (señal) y **230 V** hacia cooler y fuente. Detalle eléctrico: [arduino-relay](../configuracion/arduino-relay.md).
 
-Lo que sigue documenta ese diseño en **OpenSCAD / STL**: conducto tipo chimenea, ventilador de 120 mm y piezas auxiliares usadas en el rack, como **carcasas abiertas** para los routers.
+<div class="rack-gallery" data-rack-gallery tabindex="0">
+  <div class="rack-gallery__viewport">
+    <figure class="rack-gallery__slide" data-caption="Caja externa del módulo de relés (caja de control).">
+      <img src="../../img/rack/reles_box_1.jpg" alt="Caja de módulo de relés vista exterior" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Interior: Arduino, relés/SSR y cableado a bornes y UTP.">
+      <img src="../../img/rack/reles_box_inside.jpg" alt="Interior de la caja de relés" loading="lazy" decoding="async">
+    </figure>
+    <div class="rack-gallery__overlay">
+      <span class="rack-gallery__counter" data-rack-counter aria-live="polite"></span>
+      <button type="button" class="rack-gallery__btn" data-rack-prev aria-label="Imagen anterior">&#8249;</button>
+      <button type="button" class="rack-gallery__btn" data-rack-next aria-label="Imagen siguiente">&#8250;</button>
+    </div>
+  </div>
+  <p class="rack-gallery__caption" data-rack-caption></p>
+</div>
 
-Los **archivos CAD** viven en la raíz del repo, carpeta **`3d_parts/`**.
+## Conexiones y cableado eléctrico {: #conexiones-y-cableado-electrico }
 
-**Referencias:** [Inicio](../index.md) \| **Alimentación infra (SSR, 230 V, UTP):** [arduino-relay](../configuracion/arduino-relay.md)
+Los esquemáticos de referencia están en [arduino-relay - Esquemas eléctricos](../configuracion/arduino-relay.md#esquemas-electricos-referencia) junto con tablas de pines y comandos serial.
 
----
+## Consideraciones térmicas y ventilación {: #consideraciones-termicas }
 
-## Resumen de piezas impresas
+Con el apilado vertical, el aire caliente de los niveles inferiores **asciende** y tiende a estancarse arriba, con riesgo de sobrecalentamiento en los equipos superiores. La mitigación es un **ventilador inferior** (120 mm, 220 V) que empuja aire **frío de abajo hacia arriba** y **conductos impresos** que encaminan el flujo hacia los cajones. Ficha del ventilador: [Catálogo - Bosser 120 mm](../configuracion/catalogo-hardware.md#ventilador-bosser-120-mm-rack).
+
+## Piezas impresas en 3D
+
+Renders y fotos de las piezas usadas en conductos, bases y accesorios. Modelos orientados a imprimir **sin soportes** cuando corresponde (referencia: Creality Ender 3 Pro).
 
 | Cantidad | Archivo STL | Uso |
 |----------|-------------|-----|
@@ -34,84 +71,47 @@ Los **archivos CAD** viven en la raíz del repo, carpeta **`3d_parts/`**.
 | 1 | `airflow_chimney_duct_2levels.stl` | Segmento con 2 niveles |
 | 1 | `chimney_duct_cover.stl` | Tapa superior de la chimenea |
 | 3 | `belkin_rt3200_base.stl` | Base compacta Belkin RT3200 |
-| 1 | `CE3PRO_librerouter_rack.stl` | Carcasa abierta LibreRouter: base ventilada, standoffs; [detalle](#5-carcasa-abierta-librerouter) |
+| 1 | `CE3PRO_librerouter_rack.stl` | Carcasa abierta LibreRouter (base ventilada, standoffs) |
 | 1 | `NanoHolderA.stl` | Soporte Arduino Nano |
+| 1 | (aux.) `drawer_stop` | Guía / tope de cajón (asset visual; nombre de archivo según `3d_parts/`) |
 | (var.) | `logo fcefyn.stl`, `logo unc.stl` | Logos decorativos |
 
-En `3d_parts/`, las piezas con fuente OpenSCAD llevan un `.scad` homónimo del STL para parametrizar y exportar
+<div class="rack-gallery rack-gallery--schematics" data-rack-gallery tabindex="0">
+  <div class="rack-gallery__viewport">
+    <figure class="rack-gallery__slide" data-caption="Conducto de admisión curvado (render OpenSCAD / referencia).">
+      <img src="../../img/rack/curved_intake_duct.png" alt="Render conducto admisión curvado" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Módulo chimenea 3 niveles (rejillas orientadas a los routers).">
+      <img src="../../img/rack/airflow_chimney_duct_3levels.png" alt="Render chimenea tres niveles" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Módulo chimenea 2 niveles.">
+      <img src="../../img/rack/airflow_chimney_duct_2levels.png" alt="Render chimenea dos niveles" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Tapa superior de chimenea.">
+      <img src="../../img/rack/chimney_duct_cover.png" alt="Render tapa chimenea" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Ventilador 120 mm con conducto curvo montado (foto).">
+      <img src="../../img/rack/cooler_with_duct.jpeg" alt="Ventilador con conducto curvo montado" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Base impresa Belkin RT3200 en el rack.">
+      <img src="../../img/rack/belkin_case_adapted.jpg" alt="Base Belkin adaptada en rack" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Carcasa abierta LibreRouter.">
+      <img src="../../img/rack/librerouter-opencase.jpeg" alt="Carcasa abierta LibreRouter" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Soporte Arduino Nano (NanoHolder).">
+      <img src="../../img/rack/NanoHolder.jpg" alt="Soporte Nano impreso" loading="lazy" decoding="async">
+    </figure>
+    <figure class="rack-gallery__slide" data-caption="Logos FCEFyN y UNC.">
+      <img src="../../img/rack/logos.png" alt="Logos FCEFyN y UNC" loading="lazy" decoding="async">
+    </figure>
+    <div class="rack-gallery__overlay">
+      <span class="rack-gallery__counter" data-rack-counter aria-live="polite"></span>
+      <button type="button" class="rack-gallery__btn" data-rack-prev aria-label="Imagen anterior">&#8249;</button>
+      <button type="button" class="rack-gallery__btn" data-rack-next aria-label="Imagen siguiente">&#8250;</button>
+    </div>
+  </div>
+  <p class="rack-gallery__caption" data-rack-caption></p>
+</div>
 
----
-
-## Ventilador 120 mm (Bosser) y ensamble con conducto
-
-Abajo va un **axial 120 mm** a **220 V** que empuja aire hacia el conducto curvo impreso. Ficha del modelo, tabla y foto de referencia del producto: [Catálogo de hardware - Ventilador Bosser 120 mm](../configuracion/catalogo-hardware.md#ventilador-bosser-120-mm-rack).
-
-El **conducto de admisión curvado** (`curved_intake_duct`) se atornilla a la brida del ventilador (cuatro tornillos) y encaja con la chimenea vertical.
-
-![Ventilador con conducto curvo montado](../img/rack/cooler_with_duct.jpeg){: style="max-width: 420px; width: 100%; height: auto;" }
-
----
-
-## Detalle por pieza
-
-### 1. Conducto de admisión curvado (`curved_intake_duct.scad` / `.stl`)
-
-Conducto loft tipo «saxofón» desde la base circular del ventilador de 120 mm hasta el conector rectangular de la chimenea. Flujo suave, sin esquinas internas pronunciadas.
-
-![Conducto de admisión curvado](../img/rack/curved_intake_duct.png){: style="max-width: 400px; width: 100%; height: auto;" }
-
-**Parámetros (OpenSCAD):**
-
-- `ancho_placa_base`: ancho de la placa del ventilador (120 mm en ventiladores Bosser).
-- `altura_saxofon`: altura vertical de la transición.
-- `desplazamiento_y`: desplazamiento lateral entre ventilador y chimenea.
-- `rect_x` / `rect_y`: salida rectangular hacia la chimenea.
-
-### 2. Conducto de chimenea (`airflow_chimney_duct.scad`, `_2levels.stl`, `_3levels.stl`)
-
-Módulo vertical apilable; rejillas («branquias») a ~45° hacia los routers, sin soportes de impresión.
-
-![Chimenea 3 niveles](../img/rack/airflow_chimney_duct_3levels.png){: style="max-width: 340px; width: 100%; height: auto; margin-right: 0.5rem;" } ![Chimenea 2 niveles](../img/rack/airflow_chimney_duct_2levels.png){: style="max-width: 340px; width: 100%; height: auto;" }
-
-**Parámetros:**
-
-- `niveles_por_modulo`: 2 o 3 según STL.
-- `dist_niveles`: 60 mm entre niveles.
-- `tolerancia`: holgura conectores macho/hembra.
-- `grosor_pared`: rigidez.
-
-### 3. Tapa de chimenea (`chimney_duct_cover.scad` / `.stl`)
-
-Tapa con conector hembra para el último segmento.
-
-![Tapa chimenea](../img/rack/chimney_duct_cover.png){: style="max-width: 400px; width: 100%; height: auto;" }
-
-### 4. Base Belkin RT3200 (`belkin_rt3200_base.stl`)
-
-Carcasas originales demasiado voluminosas para el rack; base impresa para ahorrar espacio y fijar cables. Basado en [RT3200/E8450 Wall Mount Case](https://www.thingiverse.com/thing:5864938) (**TuxInvader**): solo la base, parte superior abierta para refrigeración.
-
-![Base Belkin adaptada](../img/rack/belkin_case_adapted.jpg){: style="max-width: 420px; width: 100%; height: auto;" }
-
-### 5. Carcasa abierta LibreRouter
-
-Base / bandeja **abierta por delante** para el LibreRouter en el rack: fondo ranurado para paso de aire, laterales con ventilación y **standoffs** para la PCB. Encaja con la idea de no tapar el equipo y dejar que la chimenea alimente flujo en el cajón.
-
-![Carcasa abierta impresa para LibreRouter](../img/rack/librerouter-opencase.jpeg){: style="max-width: 420px; width: 100%; height: auto;" }
-
-### 6. Auxiliares y estética
-
-- **NanoHolderA.stl**: bracket Arduino Nano.
-
-![Soporte Nano](../img/rack/NanoHolder.jpg){: style="max-width: 320px; width: 100%; height: auto;" }
-
-- **Logos** FCEFyN y UNC.
-
-![Logos FCEFyN y UNC](../img/rack/logos.png){: style="max-width: 360px; width: 100%; height: auto;" }
-
----
-
-## Impresión
-
-Modelos OpenSCAD orientados para imprimir **sin soportes** cuando corresponde. Referencia de equipo: Creality Ender 3 Pro.
-
----
+La base Belkin deriva de [RT3200/E8450 Wall Mount Case](https://www.thingiverse.com/thing:5864938) (TuxInvader): solo la base, parte superior abierta para ventilación.

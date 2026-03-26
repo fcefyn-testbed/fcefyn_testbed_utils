@@ -48,6 +48,10 @@ markdown_extensions:
 extra_css:
   - stylesheets/institutional-logos.css
   - stylesheets/demos.css
+  - stylesheets/rack-gallery.css
+
+extra_javascript:
+  - javascripts/rack-gallery.js
 
 nav:
   - Inicio: index.md
@@ -84,4 +88,4 @@ nav:
       - Tracking lab híbrido: diseno/hybrid-lab-tracking.md
       - Casos de uso CI: diseno/ci-use-cases-proposal.md
       - Virtual mesh: diseno/virtual-mesh-proposal.md
-      - Rack: diseno/rack-diseno-3d.md
+      - Rack físico: diseno/rack-diseno-3d.md
