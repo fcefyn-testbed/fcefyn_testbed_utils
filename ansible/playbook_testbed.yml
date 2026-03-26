@@ -18,6 +18,7 @@
 #   pipx run --spec ansible-core ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags poe_switch --ask-become-pass
 #   pipx run --spec ansible-core ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags wol --ask-become-pass
 #   pipx run --spec ansible-core ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags testbed_status --ask-become-pass
+#   pipx run --spec ansible-core ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags observability --ask-become-pass
 #
 # Or if ansible-core is installed: ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml -K
 
@@ -49,3 +50,6 @@
       tags:
         - testbed_status
         - testbed
+    - role: observability
+      tags:
+        - observability

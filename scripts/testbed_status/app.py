@@ -336,9 +336,9 @@ class TestbedStatusApp(App):
         self._log(f"[cyan]RELAY[/] TOGGLE {channel} ({ch_name})")
         success = await collectors.relay_toggle_channel(channel)
         if success:
-            self._log(f"  → [green]OK[/]")
+            self._log("  → [green]OK[/]")
         else:
-            self._log(f"  → [red]ERROR[/]")
+            self._log("  → [red]ERROR[/]")
             self.notify(f"Error al toggle canal {channel}", severity="error")
         await self._refresh_fast()
 
@@ -356,7 +356,7 @@ class TestbedStatusApp(App):
         self._log(f"[yellow]SYSTEMCTL[/] sudo systemctl {action} {name}")
         success, output = await collectors.service_action(name, action)
         if success:
-            self._log(f"  → [green]OK[/]")
+            self._log("  → [green]OK[/]")
             self.notify(f"{action} {name}: OK", severity="information")
         else:
             self._log(f"  → [red]ERROR[/]: {output[:60]}")
@@ -375,7 +375,7 @@ class TestbedStatusApp(App):
 
     async def _do_mode_change(self, target_mode: str) -> None:
         self._log(f"[magenta]MODE[/] Cambiando a {target_mode}...")
-        self._log(f"  → pool-manager.py --apply --force")
+        self._log("  → pool-manager.py --apply --force")
         self.notify(f"Cambiando a modo {target_mode}...", severity="information")
         success, msg = await collectors.change_testbed_mode(target_mode)
         if success:
