@@ -66,6 +66,6 @@ Los scripts de control deben estar en `/usr/local/bin/` o en el PATH; el playboo
 
 ## Prerrequisitos
 
-- **git-lfs** — `apt install git-lfs` antes de clonar (firmwares).
+- **git-lfs** - `apt install git-lfs` antes de clonar (firmwares).
 - **Python 3.11+** y dependencias: `pip install -r requirements.txt` (netmiko, pyserial, pyyaml, jinja2).
-- dnsmasq, ser2net, `pipx` — el playbook Ansible instala la mayoría.
+- dnsmasq, ser2net, `pipx` - el playbook Ansible instala la mayoría.

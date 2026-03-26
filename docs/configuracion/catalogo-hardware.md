@@ -15,7 +15,7 @@ Parte del equipamiento llegó como **aporte** de fabricantes e instituciones:
 
 ## Relés Arduino (rack)
 
-El **Arduino Nano** controla la potencia de los DUTs y de la infraestructura del rack vía **11 canales** USB-Serial. Detalle de canales, UTP, comandos y daemon: [arduino-relay.md](arduino-relay.md).
+El **Arduino Nano** controla la potencia de los DUTs y de cargas de infra del rack (cooler, fuente) vía **11 canales** USB-Serial; **no** conmuta la alimentación del switch de red. Detalle: [arduino-relay.md](arduino-relay.md).
 
 ### Arduino Nano
 
@@ -33,7 +33,7 @@ El **Arduino Nano** controla la potencia de los DUTs y de la infraestructura del
 
 ![Módulo SSR de 4 canales Omron G3MB-202P](../img/hardware/ssr-omron.png){: style="max-width: 280px; width: 100%; height: auto; display: block;" }
 
-En el laboratorio usamos **CH1** para el switch TP-Link SG2016P (canal lógico 8) y **CH2** para el cooler AC (canal 9). Los canales **CH3** y **CH4** quedan libres.
+**CH2** alimenta el cooler AC (canal 9). **CH1** (canal 8, D10) tiene señal en el UTP pero **sin carga** en el montaje actual: no conmuta la alimentación del switch de red (el SG2016P va a red fija). **CH3** y **CH4**: cableado según [arduino-relay.md](arduino-relay.md).
 
 | Parámetro | Valor |
 |-----------|--------|
@@ -41,7 +41,7 @@ En el laboratorio usamos **CH1** para el switch TP-Link SG2016P (canal lógico 8
 | Control | 5 V DC; activo en bajo (~0-2,5 V, ~2 mA); módulo hasta ~48 mA |
 | Carga | 100-240 V AC, 0,1-2 A por canal; fusible |
 | Placa / conexiones | ~57 x 55 x 25 mm; **DC+** / **DC-**; **CH1-CH4** |
-| En el lab | CH1 switch, CH2 cooler; CH3-CH4 libres |
+| En el lab | CH1 sin carga (D10 cableado); CH2 cooler; CH3-CH4 según [arduino-relay](arduino-relay.md) |
 
 ### Fotek SSR-25DA (canal 10)
 
@@ -88,7 +88,7 @@ La fuente que alimenta esa rama de **CA** se enchufa detrás del **Fotek**; el p
 
 ## Ventilador AC Bosser 120 mm
 
-Axial de marco **120 mm** a **220 V** de red en la **base del rack** (no es alimentación 12 V del Arduino). Empuja aire hacia el conducto curvo impreso; el ensamble con piezas 3D está en [Rack del banco de pruebas](../diseno/rack-diseno-3d.md).
+Axial de marco **120 mm** a **220 V** de red en la **base del rack** (no es alimentación 12 V del Arduino). Empuja aire hacia el conducto curvo impreso; el ensamble con piezas 3D está en [Rack físico](../diseno/rack-diseno-3d.md).
 
 ![Ventilador Bosser 120 mm (referencia del producto)](../img/hardware/cooler_bosser.png){: style="max-width: 420px; width: 100%; height: auto; display: block;" }
 
@@ -127,7 +127,7 @@ Con varios adaptadores seriales y periféricos, el hub se usa con **fuente exter
 
 ## Switch gestionado (TP-Link SG2016P)
 
-Switch **L2+** del lab: trunk al host y al gateway, puertos access a DUTs, parte de los puertos con **PoE**. Configuración: [switch-config.md](switch-config.md).
+Switch **L2+** del lab: trunk al host y al gateway, puertos access a DUTs, parte de los puertos con **PoE**. Configuración: [switch-config.md](switch-config.md). La **alimentación del switch no pasa por el Arduino ni por el módulo SSR** del rack (red fija); ver [arduino-relay](arduino-relay.md).
 
 ![TP-Link SG2016P](../img/hardware/tp-link-sg2016p-switch.png){: style="max-width: 380px; width: 100%; height: auto; display: block;" }
 
