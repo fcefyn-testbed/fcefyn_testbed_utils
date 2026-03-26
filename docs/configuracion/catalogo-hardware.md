@@ -6,13 +6,13 @@ Se presentan **imágenes y datos de identificación** del equipamiento físico d
 
 Parte del equipamiento llegó como **aporte** de fabricantes e instituciones:
 
-| Aportante | Equipamiento                                                                                                    |
-|-----------|-----------------------------------------------------------------------------------------------------------------|
-| [**Banana Pi**](https://banana-pi.org/) | Placas **OpenWrt One** y **Banana Pi R4** (y material asociado).                                                |
-| [**Nisuta**](https://nisuta.com/) | **Hub USB** usado en el host (sección Hub).                                                                     |
-| [**AlterMundi**](https://altermundi.net/) | Unidades **LibreRouter**..                                                                                      |
-| [**INTI**](https://www.argentina.gob.ar/inti) (Instituto Nacional de Tecnología Industrial) | Notebook **Lenovo ThinkPad T430** (host); routers **Belkin RT3200**; router gateway **TP-Link TL-WDR3500**.     |
-| [**GL.iNet**](https://www.gl-inet.com/) | Router **Mango**; **aún no** integrado al rack (hardware muy limitado para el rol habitual de DUT en el banco). |
+| Aportante                                      | Equipamiento                                                                                                  |
+|------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| [**Banana Pi**](https://banana-pi.org/)        | Placas **OpenWrt One** y **Banana Pi R4**.                                                                    |
+| [**Nisuta**](https://nisuta.com/)              | **Hub USB** conectado al host.                                                                                |
+| [**AlterMundi**](https://altermundi.net/)      | Varias unidades **LibreRouter**.                                                                              |
+| [**INTI**](https://www.argentina.gob.ar/inti)  | Notebook **Lenovo ThinkPad T430** (host); routers **Belkin RT3200**; router gateway **TP-Link TL-WDR3500**.   |
+| [**GL.iNet**](https://www.gl-inet.com/)        | Router **Mango**; **aún no** integrado al rack (hardware muy limitado para el rol habitual de DUT en el banco). |
 
 <div class="catalog-sponsors" markdown="0">
 <div class="catalog-sponsors__row">
