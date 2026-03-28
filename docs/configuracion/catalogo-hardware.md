@@ -244,12 +244,12 @@ El host de orquestación del laboratorio es una notebook **Lenovo ThinkPad T430*
 
 Conversores **USB-UART TTL** para consola en DUTs. Symlinks bajo `/dev/` y reglas **udev**: [host-config](host-config.md#7-reglas-udev-para-adaptadores-seriales).
 
-| Tipo | En el lab |
-|------|-----------|
-| **FT232RNL** | Preferido: serial USB **único por unidad**; **udev** puede no depender del puerto del hub. |
-| **CH340** | Económico aceptable; muchos clones comparten **VID/PID** (udev suele anclarse al puerto o a la ruta USB). Nivel TTL según cable (**3,3 V** / **5 V**). |
-| **CH341** (tercera foto, `ch341.jpg`) | Económico aceptable; estable en el banco. |
-| **Tres genéricos baratos** (últimas 3 fotos del carrusel) | **No** se usan en rack: sin consola en DUTs; tras reinicio del DUT hace falta **re-enchufar** el USB para recuperar serial; sobrecalentamiento o fallos esporádicos bajo tests. |
+| Tipo | En el lab                                                                                                                                                                                                                                                                                                                                                    |
+|------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **FT232RNL** | Preferido: serial USB **único por unidad**; **udev** puede no depender del puerto del hub.                                                                                                                                                                                                                                                                   |
+| **CH340** | Económico aceptable; clones comparten **VID/PID**. Nivel TTL según jumper (**3,3 V** / **5 V**).                                                                                                                                                                                                                                                             |
+| **CH341** | Económico; **no** resultó fiable en consola del **LibreRouter** del rack: durante el arranque la salida serial mostró caracteres ilegibles (basura) y **no** se pudo capturar el prompt de U-Boot con labgrid/minicom a 115200, por lo que fallaban TFTP boot y tests. Tras **cambiar el adaptador** por uno de los FT232RNL, la consola pasó a ser legible. |
+| **Tres genéricos baratos** (últimas 3 fotos del carrusel) | **No** se usan en rack: sin consola en DUTs; tras reinicio del DUT hace falta **re-enchufar** el USB para recuperar serial; sobrecalentamiento o fallos esporádicos bajo tests.                                                                                                                                                                              |
 
 <div class="rack-gallery rack-gallery--catalog-ttl" data-rack-gallery tabindex="0">
   <div class="rack-gallery__viewport">
@@ -259,7 +259,7 @@ Conversores **USB-UART TTL** para consola en DUTs. Symlinks bajo `/dev/` y regla
     <figure class="rack-gallery__slide" data-caption="CH340.">
       <img src="../../img/hardware/usb-ttl-ch340.png" alt="Adaptador USB-TTL CH340" loading="lazy" decoding="async">
     </figure>
-    <figure class="rack-gallery__slide" data-caption="CH341 (económico, estable).">
+    <figure class="rack-gallery__slide" data-caption="CH341 (económico): en LibreRouter del lab, consola ilegible al boot; ver tabla.">
       <img src="../../img/hardware/ch341.jpg" alt="Adaptador USB-TTL CH341" loading="lazy" decoding="async">
     </figure>
     <figure class="rack-gallery__slide" data-caption="Genérico barato: no recomendado.">
@@ -279,6 +279,8 @@ Conversores **USB-UART TTL** para consola en DUTs. Symlinks bajo `/dev/` y regla
   </div>
   <p class="rack-gallery__caption" data-rack-caption></p>
 </div>
+
+Para revisar **logs** cuando falla el boot en tests multi-nodo (libremesh-tests, `mesh_boot_node`), ver [Enfoque de tests LibreMesh](../tests/libremesh-testing-approach.md#mesh-boot-logs).
 
 ## Gateway del testbed (TP-Link TL-WDR3500)
 
