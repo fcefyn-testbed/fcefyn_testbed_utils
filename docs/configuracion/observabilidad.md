@@ -150,6 +150,65 @@ Collectors opcionales (según soporte del hardware):
 opkg install prometheus-node-exporter-lua-hwmon prometheus-node-exporter-lua-wifi
 ```
 
+#### Collector de filesystem (sin paquete oficial)
+
+El colector `node_filesystem_*` no existe como paquete opkg: la PR upstream [#25535](https://github.com/openwrt/packages/pull/25535) lleva desde 2020 sin merge. Se instala manualmente como archivo Lua:
+
+```sh
+cat > /usr/lib/lua/prometheus-collectors/filesystem.lua << 'EOF'
+local nix = require "nixio"
+
+local function scrape()
+  local metric_size_bytes = metric("node_filesystem_size_bytes", "gauge")
+  local metric_free_bytes = metric("node_filesystem_free_bytes", "gauge")
+  local metric_avail_bytes = metric("node_filesystem_avail_bytes", "gauge")
+  local metric_files = metric("node_filesystem_files", "gauge")
+  local metric_files_free = metric("node_filesystem_files_free", "gauge")
+  local metric_readonly = metric("node_filesystem_readonly", "gauge")
+
+  for e in io.lines("/proc/self/mounts") do
+    local fields = space_split(e)
+    local device, mount_point, fs_type = fields[1], fields[2], fields[3]
+
+    if mount_point:find("/dev/?", 1) ~= 1
+    and mount_point:find("/proc/?", 1) ~= 1
+    and mount_point:find("/sys/?", 1) ~= 1
+    and fs_type ~= "overlay" and fs_type ~= "squashfs"
+    and fs_type ~= "tmpfs"   and fs_type ~= "sysfs"
+    and fs_type ~= "proc"    and fs_type ~= "devtmpfs"
+    and fs_type ~= "devpts"  and fs_type ~= "debugfs"
+    and fs_type ~= "cgroup"  and fs_type ~= "cgroup2"
+    and fs_type ~= "pstore" then
+      local ok, stat = pcall(nix.fs.statvfs, mount_point)
+      if ok and stat then
+        local labels = { device = device, fstype = fs_type, mountpoint = mount_point }
+        local ro = (nix.bit.band(stat.flag, 0x001) == 1) and 1 or 0
+        metric_size_bytes(labels, stat.blocks * stat.bsize)
+        metric_free_bytes(labels, stat.bfree  * stat.bsize)
+        metric_avail_bytes(labels, stat.bavail * stat.bsize)
+        metric_files(labels, stat.files)
+        metric_files_free(labels, stat.ffree)
+        metric_readonly(labels, ro)
+      end
+    end
+  end
+end
+
+return { scrape = scrape }
+EOF
+```
+
+Tras crear o editar el archivo, **reiniciar** el servicio para que cargue el collector (sin restart, `wget … | grep node_filesystem` suele quedar vacío):
+
+```sh
+/etc/init.d/prometheus-node-exporter-lua restart
+wget -qO- http://127.0.0.1:9100/metrics | grep node_filesystem
+```
+
+Requiere `nixio` (dependencia habitual de `prometheus-node-exporter-lua`; si falla, `opkg install luci-lib-nixio`).
+
+**Nota:** El filesystem raíz `/` es `overlay` (filtrado por diseño, igual que en el node_exporter estándar).
+
 ### Soporte de sensores térmicos por dispositivo
 
 No todos los SoCs exponen sensores de temperatura en Linux. La tabla indica qué dispositivos tienen métricas `node_hwmon_temp_celsius`:
