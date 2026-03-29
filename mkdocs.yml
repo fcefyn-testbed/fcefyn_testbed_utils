@@ -59,6 +59,11 @@ extra_css:
 extra_javascript:
   - javascripts/rack-gallery.js
 
+# Header shortcuts (overrides/partials/header.html)
+extra:
+  grafana_url: https://fcefyn-testbed.duckdns.org/
+  github_repo_url: https://github.com/fcefyn-testbed/fcefyn_testbed_utils
+
 nav:
   - Inicio: index.md
   - Demos: demos.md
