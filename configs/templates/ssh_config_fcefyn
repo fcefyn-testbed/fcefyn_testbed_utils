@@ -1,8 +1,8 @@
 #
 # Requires: labgrid-dut-proxy installed and sudoers configured.
-# labgrid-dut-proxy selects vlan200 (mesh) or per-device vlan (isolated)
-# based on ~/.config/labgrid-vlan-mode (written by switch_vlan_preset.py).
-# See host-config.md section 3.6 for details.
+# labgrid-dut-proxy queries the switch (via labgrid-switch-abstraction)
+# for the current PVID of each DUT port, selecting mesh or isolated IP.
+# See host-config.md section 3.6 and ssh-dual-mode-flow.md for details.
 #
 # File: ~/.ssh/config
 #
