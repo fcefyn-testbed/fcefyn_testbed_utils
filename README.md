@@ -9,7 +9,7 @@ Infraestructura complementaria del banco de pruebas HIL (Hardware-in-the-Loop) d
 ```mermaid
 flowchart TB
   R["fcefyn-testbed-utils"]
-  R --> cfg["configs\npool-config.yaml · templates/"]
+  R --> cfg["configs\ndut-config.yaml · templates/"]
   R --> doc["docs\níndice: docs/README.md"]
   R --> scr["scripts\nswitch · arduino · testbed_status · utilidades"]
   R --> fw["firmwares\nimágenes por dispositivo"]
@@ -19,7 +19,7 @@ flowchart TB
 
   subgraph tmpl["templates/ (copiar al host)"]
     t1[systemd · udev · ssh_config_fcefyn]
-    t2[poe_switch_control.conf.example]
+    t2[switch.conf.example]
   end
   cfg --> tmpl
 ```
@@ -47,11 +47,8 @@ El playbook despliega exporter, PDUDaemon, dnsmasq, netplan, places.yaml, etc. V
 
 | Script | Uso |
 |--------|-----|
-| `scripts/switch/poe_switch_control.py` | Puertos PoE del switch TP-Link (OpenWRT One, Librerouter). |
-| `scripts/switch/switch_vlan_preset.py` | Cambia VLANs del switch (isolated vs mesh) y actualiza gateway en DUTs. |
-| `scripts/switch/pool-manager.py` | Modo híbrido: exporters por pool, switch differential apply, gateway por DUT. |
-| `scripts/switch/dut_gateway.py` | Módulo: actualiza gateway/DNS en DUTs vía SSH paralelo. Usado por preset y pool-manager. |
-| `scripts/switch/constants.py` | Módulo: constantes de red compartidas (IPs, VLANs, paths). |
+| `scripts/switch/poe_switch_control.py` | Puertos PoE del switch TP-Link (OpenWRT One, Librerouter). Usa `labgrid-switch-abstraction`. |
+| `scripts/switch/dut_gateway.py` | Módulo: actualiza gateway/DNS en DUTs vía SSH paralelo. |
 | `scripts/arduino/arduino_relay_control.py` | Control de relés Arduino (power on/off). Usado por PDUDaemon. |
 | `scripts/arduino/arduino_daemon.py` | Daemon de conexión persistente al Arduino. Servicio `arduino-relay-daemon`. |
 | `scripts/arduino/start_daemon.sh` | Arranque manual del daemon Arduino. |
