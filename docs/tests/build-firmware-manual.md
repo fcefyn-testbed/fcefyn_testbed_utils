@@ -1,10 +1,12 @@
-# Build manual de firmware (OpenWrt / LibreMesh)
+# Manual firmware build (OpenWrt / LibreMesh)
 
-Guia para buildear imágenes para en el lab (`LG_IMAGE`, TFTP).
+Guide to build images for the lab (`LG_IMAGE`, TFTP).
+
+**Canonical libremesh-tests docs** (suite behaviour, CI image catalog): [LibreMesh testing approach](https://github.com/francoriba/libremesh-tests/blob/main/docs/libremesh-testing-approach.md), [CI firmware catalog](https://github.com/francoriba/libremesh-tests/blob/main/docs/ci-firmware-catalog.md).
 
 ---
 
-## Config de build por DUT
+## Build config per DUT
 
 | DUT | Arch | Subtarget | Profile |
 |-----|------|-----------|---------|
@@ -17,11 +19,11 @@ Guia para buildear imágenes para en el lab (`LG_IMAGE`, TFTP).
 | **QEMU Malta BE** | malta | be | generic |
 | **QEMU armsr-armv8** | armsr | armv8 | generic |
 
-**Uso:** `make menuconfig` → Target System → (Arch) → Subtarget → (Subtarget) → Target Profile → (Profile).
+**Usage:** `make menuconfig` → Target System → (Arch) → Subtarget → (Subtarget) → Target Profile → (Profile).
 
 ### LibreMesh (lime-packages)
 
-**1. Descargar OpenWrt y entrar al build root**
+**1. Clone OpenWrt and enter build root**
 
 ```bash
 git clone -b v23.05.5 --single-branch https://git.openwrt.org/openwrt/openwrt.git
@@ -39,28 +41,28 @@ src-git profiles https://github.com/libremesh/network-profiles.git
 EOF
 ```
 
-`v2024.1` = LibreMesh 2024.1 (compatible con OpenWrt 23.05.5). Sin sufijo se usa `master`, que requiere OpenWrt 24.10.
+`v2024.1` = LibreMesh 2024.1 (compatible with OpenWrt 23.05.5). Without suffix, `master` is used, which needs OpenWrt 24.10.
 
-**3. Actualizar e instalar paquetes**
+**3. Update and install packages**
 
 ```bash
 scripts/feeds update -a
 scripts/feeds install -a
 ```
 
-**4. `make menuconfig` - Deseleccionar**
+**4. `make menuconfig` - Deselect**
 
-| Ubicación | Acción |
-|-----------|--------|
-| Image configuration → Separate feed repositories → Enable feed **libremesh** | Deseleccionar |
-| Image configuration → Separate feed repositories → Enable feed **profiles** | Deseleccionar |
-| Base system → **dnsmasq** | Deseleccionar |
-| Network → **odhcpd-ipv6only** | Deseleccionar |
+| Location | Action |
+|----------|--------|
+| Image configuration → Separate feed repositories → Enable feed **libremesh** | Deselect |
+| Image configuration → Separate feed repositories → Enable feed **profiles** | Deselect |
+| Base system → **dnsmasq** | Deselect |
+| Network → **odhcpd-ipv6only** | Deselect |
 
-**5. `make menuconfig` - Seleccionar LibreMesh**
+**5. `make menuconfig` - Select LibreMesh**
 
-| Ubicación |
-|-----------|
+| Location |
+|----------|
 | LibreMesh → **babeld-auto-gw-mode** |
 | LibreMesh → Offline Documentation → **lime-docs-minimal** |
 | LibreMesh → **lime-app** |
@@ -72,22 +74,22 @@ scripts/feeds install -a
 | LibreMesh → **shared-state** → shared-state-bat_hosts |
 | LibreMesh → **shared-state** → shared-state-nodes_and_links |
 
-**5.1 Targets virtuales con vwifi (opcional)**
+**5.1 Virtual targets with vwifi (optional)**
 
-Solo para tests mesh en QEMU (x86-64, Malta, armsr-armv8) que usan virtual wifi:
+Only for mesh tests in QEMU (x86-64, Malta, armsr-armv8) using virtual WiFi:
 
-| Paso | Acción |
+| Step | Action |
 |------|--------|
-| Feeds | Añadir a `feeds.conf`: `src-git vwifi https://github.com/javierbrk/vwifi_cli_package` |
-| Actualizar | `scripts/feeds update vwifi && scripts/feeds install -a` |
+| Feeds | Add to `feeds.conf`: `src-git vwifi https://github.com/javierbrk/vwifi_cli_package` |
+| Update | `scripts/feeds update vwifi && scripts/feeds install -a` |
 | Menuconfig | Network → **vwifi** |
-| wpad | Incluir **wpad-basic-mbedtls** en la imagen (sin él batman no ve interfaces en vwifi) |
+| wpad | Include **wpad-basic-mbedtls** in the image (without it batman does not see interfaces on vwifi) |
 
-**6. Compilar**
+**6. Build**
 
 ```bash
 make -j$(nproc)
 ```
 
-Binarios en `bin/targets/.../.../`.  
-Fuente: [libremesh.org/development](https://libremesh.org/development.html)
+Binaries under `bin/targets/.../.../`.  
+Source: [libremesh.org/development](https://libremesh.org/development.html)
