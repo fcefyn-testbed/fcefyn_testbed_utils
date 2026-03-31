@@ -1,0 +1,30 @@
+---
+# Deploy labgrid-dut-proxy and dut-proxy.yaml.
+#
+# labgrid-dut-proxy is an SSH ProxyCommand that queries the switch for
+# the current PVID of a DUT port, selecting isolated or mesh IP/VLAN.
+# Requires: labgrid-switch-abstraction, labgrid-bound-connect, socat.
+
+- name: Create /etc/labgrid directory
+  ansible.builtin.file:
+    path: /etc/labgrid
+    state: directory
+    mode: "0755"
+
+- name: Deploy dut-proxy.yaml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../configs/dut-proxy.yaml"
+    dest: /etc/labgrid/dut-proxy.yaml
+    mode: "0644"
+
+- name: Install labgrid-dut-proxy
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../scripts/labgrid-dut-proxy"
+    dest: /usr/local/sbin/labgrid-dut-proxy
+    mode: "0755"
+
+- name: Add labgrid-dut-proxy to sudoers
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    line: "ALL ALL = NOPASSWD: /usr/local/sbin/labgrid-dut-proxy"
+    validate: "visudo -cf %s"
