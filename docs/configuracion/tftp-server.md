@@ -207,7 +207,7 @@ sudo rm /srv/tftp/firmwares/<device>/<filename>
 # 3. Clean resulting broken symlinks (section 5.4)
 ```
 
-See also [ci-use-cases-proposal](../diseno/ci-use-cases-proposal.md) section 4.5 for design context.
+See also [CI use cases](../diseno/ci-use-cases.md) section 4.5 for design context.
 
 ---
 

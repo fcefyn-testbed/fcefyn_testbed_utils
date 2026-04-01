@@ -103,7 +103,7 @@ def _build_uci_commands(ip: str) -> list[str]:
     - Gateway-subnet IP 192.168.200.x on lan (for MikroTik reachability in mesh)
 
     Does NOT modify the default gateway or DNS -- those are managed by
-    switch_vlan_preset.py at mode-switch time.
+    dut_gateway.py when VLAN changes occur.
     """
     last_octet = ip.split(".")[-1]
     gateway_subnet_ip = f"192.168.200.{last_octet}"

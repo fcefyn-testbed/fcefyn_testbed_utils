@@ -1,69 +1,69 @@
 # fcefyn-testbed-utils
 
-Infraestructura complementaria del banco de pruebas HIL (Hardware-in-the-Loop) de FCEFyN: configs, scripts y firmwares que no forman parte de los repositorios contribuidos libremsh-tests y openwrt-tests
+Complementary infrastructure for the FCEFyN HIL (Hardware-in-the-Loop) testbed: configs, scripts, and firmwares that are not part of the contributed repositories libremesh-tests and openwrt-tests.
 
 ---
 
-## Estructura
+## Structure
 
 ```mermaid
 flowchart TB
   R["fcefyn-testbed-utils"]
-  R --> cfg["configs\ndut-config.yaml · dut-proxy.yaml · templates/"]
-  R --> doc["docs\níndice: docs/README.md"]
-  R --> scr["scripts\nswitch · arduino · testbed_status · labgrid-dut-proxy"]
-  R --> fw["firmwares\nimágenes por dispositivo"]
-  R --> ard["arduino\nfirmware controlador relés"]
+  R --> cfg["configs\ndut-config.yaml · templates/"]
+  R --> doc["docs\nindex: docs/README.md"]
+  R --> scr["scripts\nswitch · arduino · testbed_status"]
+  R --> fw["firmwares\nimages per device"]
+  R --> ard["arduino\nrelay controller firmware"]
   R --> parts["3d_parts\nOpenSCAD · STL"]
   R --> vm["vms\nlibremesh_node.sh"]
 
-  subgraph tmpl["templates/ (copiar al host)"]
+  subgraph tmpl["templates/ (copy to host)"]
     t1[systemd · udev · ssh_config_fcefyn]
     t2[switch.conf.example]
   end
   cfg --> tmpl
 ```
 
-En **templates/**: servicios `arduino-relay-daemon`, `99-serial-devices.rules`, `switch.conf.example`, etc.
+In **templates/**: `arduino-relay-daemon` service, `99-serial-devices.rules`, `switch.conf.example`, etc.
 
-**CAD del rack (solo modelos):** carpeta **`3d_parts/`**. Descripción e imágenes: [docs/diseno/rack-diseno-3d.md](docs/diseno/rack-diseno-3d.md).
+**Rack CAD (models only):** directory **`3d_parts/`**. Description and images: [docs/diseno/rack-diseno-3d.md](docs/diseno/rack-diseno-3d.md).
 
 ---
 
 ## Setup (Ansible)
 
-El setup productivo y local se hace con **Ansible** desde libremesh-tests (o openwrt-tests):
+Production and local setup is done with **Ansible** from libremesh-tests (or openwrt-tests):
 
 ```bash
-cd openwrt-tests   # o libremesh-tests
+cd openwrt-tests   # or libremesh-tests
 ansible-playbook -i inventory.ini playbook_labgrid.yml -l labgrid-fcefyn -K
 ```
 
-El playbook despliega exporter, PDUDaemon, dnsmasq, netplan, places.yaml, etc. Ver [docs/configuracion/ansible-labgrid.md](docs/configuracion/ansible-labgrid.md).
+The playbook deploys exporter, PDUDaemon, dnsmasq, netplan, places.yaml, etc. See [docs/configuracion/ansible-labgrid.md](docs/configuracion/ansible-labgrid.md).
 
 ---
 
 ## Scripts
 
-| Script | Uso |
-|--------|-----|
-| `scripts/switch/poe_switch_control.py` | Puertos PoE del switch TP-Link (OpenWRT One, Librerouter). Usa `labgrid-switch-abstraction`. |
-| `scripts/switch/dut_gateway.py` | Módulo: actualiza gateway/DNS en DUTs vía SSH paralelo. |
-| `scripts/arduino/arduino_relay_control.py` | Control de relés Arduino (power on/off). Usado por PDUDaemon. |
-| `scripts/arduino/arduino_daemon.py` | Daemon de conexión persistente al Arduino. Servicio `arduino-relay-daemon`. |
-| `scripts/arduino/start_daemon.sh` | Arranque manual del daemon Arduino. |
-| `scripts/testbed_status/` | TUI de estado del lab (modo, relés, servicios, pools, DUTs). Ejecutar: `testbed-status`. Documentación: [docs/operar/testbed-status.md](docs/operar/testbed-status.md). |
-| `scripts/generate_places_yaml.py` | Genera `places.yaml` desde labnet.yaml. |
-| `scripts/provision_mesh_ip.py` | Provisiona 10.13.200.x + ruta 10.13.0.0/16 por serial para SSH en mesh. Ver host-config §3.6. |
-| `scripts/resolve_target.py` | Resuelve target file desde device name. |
-| `scripts/labgrid-dut-proxy` | SSH ProxyCommand que consulta el PVID del puerto en el switch para resolver VLAN/IP. Desplegado a `/usr/local/sbin/` por Ansible (role: `dut_proxy`). |
+| Script | Description |
+|--------|-------------|
+| `scripts/switch/poe_switch_control.py` | PoE ports on the TP-Link switch (OpenWRT One, Librerouter). Uses `labgrid-switch-abstraction`. |
+| `scripts/switch/dut_gateway.py` | Module: updates gateway/DNS on DUTs via parallel SSH. |
+| `scripts/arduino/arduino_relay_control.py` | Arduino relay control (power on/off). Used by PDUDaemon. |
+| `scripts/arduino/arduino_daemon.py` | Persistent connection daemon for the Arduino. Service `arduino-relay-daemon`. |
+| `scripts/arduino/start_daemon.sh` | Manual startup for the Arduino daemon. |
+| `scripts/testbed_status/` | Lab status TUI (VLAN state, relays, services, DUTs). Run: `testbed-status`. Docs: [docs/operar/testbed-status.md](docs/operar/testbed-status.md). |
+| `scripts/generate_places_yaml.py` | Generates `places.yaml` from labnet.yaml. |
+| `scripts/provision_mesh_ip.py` | Provisions 10.13.200.x + route 10.13.0.0/16 via serial for SSH in mesh. See host-config §3.6. |
+| `scripts/resolve_target.py` | Resolves target file from device name. |
 
-Los scripts de control deben estar en `/usr/local/bin/` o en el PATH; el playbook puede copiarlos.
+
+Control scripts should be in `/usr/local/bin/` or in PATH; the playbook can copy them.
 
 ---
 
-## Prerrequisitos
+## Prerequisites
 
-- **git-lfs** - `apt install git-lfs` antes de clonar (firmwares).
-- **Python 3.11+** y dependencias: `pip install -r requirements.txt` (netmiko, pyserial, pyyaml, jinja2).
-- dnsmasq, ser2net, `pipx` - el playbook Ansible instala la mayoría.
+- **git-lfs** - `apt install git-lfs` before cloning (firmwares).
+- **Python 3.11+** and dependencies: `pip install -r requirements.txt` (netmiko, pyserial, pyyaml, jinja2).
+- dnsmasq, ser2net, `pipx` - the Ansible playbook installs most of these.

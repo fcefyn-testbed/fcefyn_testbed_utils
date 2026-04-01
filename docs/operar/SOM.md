@@ -14,7 +14,7 @@ The testbed validates **OpenWrt** and **LibreMesh** firmware automatically with 
 
 ## Technical summary
 
-An **orchestration host** runs the Labgrid exporter, TFTP, switch scripts, and test suites. A **global coordinator** (datacenter VM, via WireGuard) manages locks and reservations. The **rack** holds the managed switch, power (PoE / relays), USB serial, and cables to DUTs. [Unified pool architecture](../diseno/unified-pool-proposal.md). Overview diagram: [on the home page](../index.md#testbed-overview).
+An **orchestration host** runs the Labgrid exporter, TFTP, switch scripts, and test suites. A **global coordinator** (datacenter VM, via WireGuard) manages locks and reservations. The **rack** holds the managed switch, power (PoE / relays), USB serial, and cables to DUTs. [Unified pool architecture](../diseno/unified-pool.md). Overview diagram: [on the home page](../index.md#testbed-overview).
 
 ---
 
@@ -75,7 +75,7 @@ Summary of flows relevant to operations and incidents. Host firewall detail: [ho
 | Direction | Scope | Source / destination | Protocol | Port | Notes |
 |-----------|-------|----------------------|----------|------|-------|
 | INPUT | Inside | Admin → host | SSH | 22 | Orchestrator management (LAN/VPN per policy). |
-| INPUT | Inside | Host → DUT | SSH | 22 | Via `labgrid-dut-proxy` / bound-connect; depends on VLAN mode. |
+| INPUT | Inside | Host → DUT | SSH | 22 | Via `labgrid-bound-connect` (static isolated VLAN per DUT). |
 | INPUT | Inside | DUT → host | TFTP | 69/udp | Initramfs load from host (udp). |
 | INPUT | Inside | Host → switch | SSH | 22 | VLAN management (e.g. `switch-fcefyn`). |
 | OUTPUT | Cross | Exporter → global coordinator | WebSocket | 20408 | To coordinator on datacenter VM via WireGuard. |
@@ -88,7 +88,7 @@ Summary of flows relevant to operations and incidents. Host firewall detail: [ho
 ## Automation
 
 - **Ansible:** `ansible/playbook_labgrid.yml` (exporter, places, users). See [ansible-labgrid](../configuracion/ansible-labgrid.md).
-- **Dynamic VLAN:** `labgrid-switch-abstraction` (used by libremesh-tests in CI); manual ops: `switch-vlan`. Details in [unified pool architecture](../diseno/unified-pool-proposal.md).
+- **Dynamic VLAN:** `labgrid-switch-abstraction` (used by libremesh-tests in CI); manual ops: `switch-vlan`. Details in [unified pool architecture](../diseno/unified-pool.md).
 
 ---
 

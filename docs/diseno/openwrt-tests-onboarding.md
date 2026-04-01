@@ -221,12 +221,12 @@ sequenceDiagram
 
 | Aspect | openwrt-tests (upstream) | libremesh-tests (fork) |
 |--------|--------------------------|------------------------|
-| Coordinator | Remote (`global-coordinator`) | Local (same host as lab) |
+| Coordinator | Global (datacenter VM) | Same global coordinator |
 | Ansible control node | Aparcar infrastructure | The lab itself (self-setup) |
-| VLANs | One per DUT (isolated, 192.168.1.1) | Shared (VLAN 200, 10.13.x.x) |
+| VLANs | Dynamic per test (isolated default, 192.168.1.x) | Dynamic per test (mesh VLAN 200, 10.13.x.x for multi-node) |
 | Multi-node tests | Not supported | Implemented in `conftest_mesh.py` |
 
-For the unified pool that lets the same lab serve both projects with dynamic VLAN per test, see [unified-pool-proposal](unified-pool-proposal.md).
+Both projects share the same DUT pool with a [unified pool architecture](unified-pool.md): each test locks DUTs via Labgrid and sets the VLAN it needs at runtime.
 
 ---
 

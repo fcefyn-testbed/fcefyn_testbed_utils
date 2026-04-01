@@ -9,14 +9,14 @@ Documentation for the OpenWrt and LibreMesh HIL testbed.
 | Role | Read first | Then |
 |------|------------|------|
 | **Lab admin** | [SOM](operar/SOM.md) | [Lab procedures](operar/lab-procedures.md), [testbed-status](operar/testbed-status.md), [rack-cheatsheets](operar/rack-cheatsheets.md), [adding-dut-guide](operar/adding-dut-guide.md), [build-firmware-manual](tests/build-firmware-manual.md) |
-| **Test developer** | [dut-proxy-by-mode](tests/dut-proxy-by-mode.md), [labgrid-troubleshooting](tests/labgrid-troubleshooting.md) | [Lab procedures](operar/lab-procedures.md), [build-firmware-manual](tests/build-firmware-manual.md); [LibreMesh testing approach](https://github.com/francoriba/libremesh-tests/blob/main/docs/libremesh-testing-approach.md), [CI firmware catalog](https://github.com/francoriba/libremesh-tests/blob/main/docs/ci-firmware-catalog.md) (libremesh-tests repo) |
-| **Reviewer (thesis/proposal)** | [hybrid-lab-proposal](diseno/hybrid-lab-proposal.md) | [hybrid-lab-tracking](diseno/hybrid-lab-tracking.md) for status, [ci-use-cases-proposal](diseno/ci-use-cases-proposal.md) for CI |
+| **Test developer** | [SSH access to DUTs](tests/dut-ssh-access.md), [labgrid-troubleshooting](tests/labgrid-troubleshooting.md) | [Lab procedures](operar/lab-procedures.md), [build-firmware-manual](tests/build-firmware-manual.md); [LibreMesh testing approach](https://github.com/francoriba/libremesh-tests/blob/main/docs/libremesh-testing-approach.md), [CI firmware catalog](https://github.com/francoriba/libremesh-tests/blob/main/docs/ci-firmware-catalog.md) (libremesh-tests repo) |
+| **Reviewer (thesis)** | [hybrid-lab (historical)](diseno/hybrid-lab-proposal.md) | [hybrid-lab-tracking](diseno/hybrid-lab-tracking.md) for status, [CI use cases](diseno/ci-use-cases.md) for CI |
 
 ---
 
 ## Technical references (as needed)
 
-[host-config](configuracion/host-config.md) · [switch-config](configuracion/switch-config.md) · [duts-config](configuracion/duts-config.md) · [gateway](configuracion/gateway.md) · [arduino-relay](configuracion/arduino-relay.md) · [tftp-server](configuracion/tftp-server.md) · [ansible-labgrid](configuracion/ansible-labgrid.md) · [ci-runner](configuracion/ci-runner.md) · [observabilidad](configuracion/observabilidad.md) · [grafana-public-access](configuracion/grafana-public-access.md) · [rack-diseno-3d](diseno/rack-diseno-3d.md) · [Lab procedures](operar/lab-procedures.md) · [build-firmware-manual](tests/build-firmware-manual.md) · [dut-proxy-by-mode](tests/dut-proxy-by-mode.md) · [labgrid-troubleshooting](tests/labgrid-troubleshooting.md) · [adding-dut-guide](operar/adding-dut-guide.md) · [testbed-status](operar/testbed-status.md) · [wake-on-lan-setup](operar/wake-on-lan-setup.md) · [zerotier-remote-access](operar/zerotier-remote-access.md)
+[host-config](configuracion/host-config.md) · [switch-config](configuracion/switch-config.md) · [duts-config](configuracion/duts-config.md) · [gateway](configuracion/gateway.md) · [arduino-relay](configuracion/arduino-relay.md) · [tftp-server](configuracion/tftp-server.md) · [ansible-labgrid](configuracion/ansible-labgrid.md) · [ci-runner](configuracion/ci-runner.md) · [observabilidad](configuracion/observabilidad.md) · [grafana-public-access](configuracion/grafana-public-access.md) · [rack-diseno-3d](diseno/rack-diseno-3d.md) · [Lab procedures](operar/lab-procedures.md) · [build-firmware-manual](tests/build-firmware-manual.md) · [dut-ssh-access](tests/dut-ssh-access.md) · [labgrid-troubleshooting](tests/labgrid-troubleshooting.md) · [adding-dut-guide](operar/adding-dut-guide.md) · [testbed-status](operar/testbed-status.md) · [wake-on-lan-setup](operar/wake-on-lan-setup.md) · [zerotier-remote-access](operar/zerotier-remote-access.md)
 
 ---
 
@@ -69,7 +69,7 @@ flowchart TB
 | dnsmasq | `/etc/dnsmasq.conf` | Ansible |
 | Netplan | `/etc/netplan/labnet.yaml` | Ansible |
 | Coordinator | `/etc/labgrid/places.yaml` | Ansible or `generate_places_yaml.py` |
-| dut-proxy | `/etc/labgrid/dut-proxy.yaml` | Ansible role `dut_proxy` (fcefyn_testbed_utils). See [dut-proxy-by-mode](tests/dut-proxy-by-mode.md). |
+| SSH config | `~/.ssh/config` | Static `ProxyCommand` per DUT (template: `configs/templates/ssh_config_fcefyn`). See [dut-ssh-access](tests/dut-ssh-access.md). |
 | TFTP root | `/srv/tftp/` | Manual |
 | Switch config | `~/.config/switch.conf` | `configs/templates/switch.conf.example` |
 | Udev serial | `/etc/udev/rules.d/99-serial-devices.rules` | `configs/templates/99-serial-devices.rules` |

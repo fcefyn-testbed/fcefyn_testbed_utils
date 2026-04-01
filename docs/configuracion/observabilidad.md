@@ -26,7 +26,7 @@ The **lab host** runs the metrics stack. On each **DUT**, only the OpenWrt expor
 ```mermaid
 flowchart LR
   DUT[DUT exporter loopback :9100]
-  Proxy[labgrid-dut-proxy SSH]
+  Proxy[labgrid-bound-connect SSH]
   Tunnel[autossh host :191XX]
   Host[host node_exporter :9100]
   Prom[Prometheus scrape localhost]
@@ -38,7 +38,7 @@ flowchart LR
   Prom --> Graf
 ```
 
-Prometheus only talks to **127.0.0.1** on the host; the DUT IP on the VLAN is resolved via SSH + `labgrid-dut-proxy` (switch port PVID). If the DUT VLAN changes, the session drops and **`autossh`** brings the forward back up.
+Prometheus only talks to **127.0.0.1** on the host; the DUT IP on the VLAN is resolved via SSH + `labgrid-bound-connect` (static isolated VLAN per DUT). If the DUT VLAN changes briefly during tests, the session drops and **`autossh`** brings the forward back up.
 
 ---
 

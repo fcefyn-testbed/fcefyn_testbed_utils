@@ -19,7 +19,7 @@ The documentation covers:
 
 - **Validate firmware** for *OpenWrt*- and *LibreMesh*-based routers in an **automated, repeatable** way using the [Labgrid](https://labgrid.readthedocs.io/en/latest/) + [pytest](https://docs.pytest.org/en/stable/) ecosystem, following *openwrt-tests* and *libremesh-tests*.
 - **Cover physical and emulated targets**: tests on **physical devices** in a rack over physical links and on [QEMU](https://www.qemu.org/) instances with WiFi simulated via [vwifi](https://github.com/sysprog21/vwifi).
-- **Operate a shared lab**: with a [unified pool architecture](diseno/unified-pool-proposal.md) of devices for both projects, and remote access for administrators.
+- **Operate a shared lab**: with a [unified pool architecture](diseno/unified-pool.md) of devices for both projects, and remote access for administrators.
 
 ### Testbed overview
 
@@ -38,7 +38,7 @@ The diagram above summarizes the topology: host, switch, gateway, and rack.
 | Profile | Start with | Then |
 |--------|------------|------|
 | **Lab admin** | [SOM](operar/SOM.md) | [Lab procedures](operar/lab-procedures.md), [testbed-status](operar/testbed-status.md), [Rack cheatsheets](operar/rack-cheatsheets.md), [Adding a DUT](operar/adding-dut-guide.md), [Build firmware](tests/build-firmware-manual.md) |
-| **Test developer** | [DUT proxy](tests/dut-proxy-by-mode.md), [Labgrid troubleshooting](tests/labgrid-troubleshooting.md) | [Lab procedures](operar/lab-procedures.md), [Manual firmware build](tests/build-firmware-manual.md); LibreMesh suite docs in-repo: [LibreMesh testing approach](https://github.com/francoriba/libremesh-tests/blob/main/docs/libremesh-testing-approach.md), [CI firmware catalog](https://github.com/francoriba/libremesh-tests/blob/main/docs/ci-firmware-catalog.md) |
-| **Reviewer or contributor** | [Unified pool architecture](diseno/unified-pool-proposal.md) | [openwrt-tests onboarding](diseno/openwrt-tests-onboarding.md), [CI use cases](diseno/ci-use-cases-proposal.md) |
+| **Test developer** | [SSH access to DUTs](tests/dut-ssh-access.md), [Labgrid troubleshooting](tests/labgrid-troubleshooting.md) | [Lab procedures](operar/lab-procedures.md), [Manual firmware build](tests/build-firmware-manual.md); LibreMesh suite docs in-repo: [LibreMesh testing approach](https://github.com/francoriba/libremesh-tests/blob/main/docs/libremesh-testing-approach.md), [CI firmware catalog](https://github.com/francoriba/libremesh-tests/blob/main/docs/ci-firmware-catalog.md) |
+| **Reviewer or contributor** | [Unified pool architecture](diseno/unified-pool.md) | [openwrt-tests onboarding](diseno/openwrt-tests-onboarding.md), [CI use cases](diseno/ci-use-cases.md) |
 | **Metrics (Grafana HTTPS)** | [URL and access](configuracion/grafana-public-access.md#url-and-access) | Invitation required; contacts in [SOM - Ownership and support](operar/SOM.md#ownership-and-support). Tunnel details: [public Grafana](configuracion/grafana-public-access.md). |
 | **Demos (video)** | [Demos](demos.md) | Remote HIL access and other recordings |
