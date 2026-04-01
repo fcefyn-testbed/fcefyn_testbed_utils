@@ -83,7 +83,7 @@ Testbed VLAN configuration is **not done manually** on the switch; these tools a
 | Tool | Use |
 |------|-----|
 | **switch-vlan** | labgrid-switch-abstraction CLI: per-DUT VLAN change (`switch-vlan <dut> <vlan>`, `--restore`, `--restore-all`). Used by tests and manual ops. |
-| **labgrid-bound-connect** | SSH ProxyCommand (`socat` + `SO_BINDTODEVICE`) binds each DUT alias to its isolated VLAN. See [SSH access to DUTs](../tests/dut-ssh-access.md). |
+| **labgrid-bound-connect** | SSH ProxyCommand (`socat` + `SO_BINDTODEVICE`) binds each DUT alias to its isolated VLAN. See [SSH access to DUTs](../operar/dut-ssh-access.md). |
 
 Day-to-day: [Lab procedures §2](../operar/lab-procedures.md#2-dynamic-vlan-per-test) (unified pool uses `switch-vlan` / `labgrid-switch-abstraction` and [unified pool architecture](../diseno/unified-pool.md)).
 

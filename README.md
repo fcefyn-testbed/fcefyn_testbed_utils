@@ -11,7 +11,7 @@ flowchart TB
   R["fcefyn-testbed-utils"]
   R --> cfg["configs\ndut-config.yaml · templates/"]
   R --> doc["docs\nindex: docs/README.md"]
-  R --> scr["scripts\nswitch · arduino · testbed_status"]
+  R --> scr["scripts\nswitch · arduino"]
   R --> fw["firmwares\nimages per device"]
   R --> ard["arduino\nrelay controller firmware"]
   R --> parts["3d_parts\nOpenSCAD · STL"]
@@ -52,7 +52,7 @@ The playbook deploys exporter, PDUDaemon, dnsmasq, netplan, places.yaml, etc. Se
 | `scripts/arduino/arduino_relay_control.py` | Arduino relay control (power on/off). Used by PDUDaemon. |
 | `scripts/arduino/arduino_daemon.py` | Persistent connection daemon for the Arduino. Service `arduino-relay-daemon`. |
 | `scripts/arduino/start_daemon.sh` | Manual startup for the Arduino daemon. |
-| `scripts/testbed_status/` | Lab status TUI (VLAN state, relays, services, DUTs). Run: `testbed-status`. Docs: [docs/operar/testbed-status.md](docs/operar/testbed-status.md). |
+
 | `scripts/generate_places_yaml.py` | Generates `places.yaml` from labnet.yaml. |
 | `scripts/provision_mesh_ip.py` | Provisions 10.13.200.x + route 10.13.0.0/16 via serial for SSH in mesh. See host-config §3.6. |
 | `scripts/resolve_target.py` | Resolves target file from device name. |

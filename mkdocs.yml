@@ -74,8 +74,10 @@ nav:
   - Lab operations:
       - Operations manual: operar/SOM.md
       - Lab procedures: operar/lab-procedures.md
-      - testbed-status dashboard: operar/testbed-status.md
       - Rack cheatsheet: operar/rack-cheatsheets.md
+      - SSH access to DUTs: operar/dut-ssh-access.md
+      - Manual firmware build: operar/build-firmware-manual.md
+      - Labgrid troubleshooting: operar/labgrid-troubleshooting.md
       - Adding a DUT: operar/adding-dut-guide.md
       - Wake-on-LAN: operar/wake-on-lan-setup.md
       - ZeroTier (remote access): operar/zerotier-remote-access.md
@@ -96,10 +98,6 @@ nav:
       - Metrics:
           - Public Grafana: configuracion/grafana-public-access.md
           - Observability: configuracion/observabilidad.md
-  - Testing and firmware:
-      - Manual firmware build: tests/build-firmware-manual.md
-      - SSH access to DUTs: tests/dut-ssh-access.md
-      - Labgrid troubleshooting: tests/labgrid-troubleshooting.md
   - Design:
       - Unified pool architecture: diseno/unified-pool.md
       - openwrt-tests onboarding: diseno/openwrt-tests-onboarding.md

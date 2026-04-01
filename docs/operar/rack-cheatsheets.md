@@ -19,7 +19,7 @@ Quick reference at the rack.
 | Librerouter 2 | 3 | 106 | Relay | - | - | `ssh dut-librerouter-2` | - |
 | Librerouter 3 | 4 | 107 | Relay | - | - | `ssh dut-librerouter-3` | - |
 
-**SSH (isolated)** connects via `labgrid-bound-connect` on the DUT's isolated VLAN (default state). **Mesh VLAN 200** access (e.g. test crash left DUT there): `sudo labgrid-bound-connect vlan200 <mesh_ip> 22`. Details: [SSH access to DUTs](../tests/dut-ssh-access.md). First time in the lab: `provision_mesh_ip.py --all`.
+**SSH (isolated)** connects via `labgrid-bound-connect` on the DUT's isolated VLAN (default state). **Mesh VLAN 200** access (e.g. test crash left DUT there): `sudo labgrid-bound-connect vlan200 <mesh_ip> 22`. Details: [SSH access to DUTs](dut-ssh-access.md). First time in the lab: `provision_mesh_ip.py --all`.
 
 ---
 
@@ -33,7 +33,7 @@ Quick reference at the rack.
 | LibreRouter 1 | generic | librerouter_librerouter-v1 |
 | Gateway TL-WDR3500 | generic | tplink_tl-wdr3500-v1 |
 
-LibreMesh feeds, `menuconfig`, lime packages, QEMU/vwifi: [build-firmware-manual](../tests/build-firmware-manual.md).
+LibreMesh feeds, `menuconfig`, lime packages, QEMU/vwifi: [build-firmware-manual](build-firmware-manual.md).
 
 ---
 

@@ -2,7 +2,7 @@
 
 Short manual for operators of the HIL testbed (vision, links, connectivity, typical incidents). **Step-by-step procedures and commands:** [Lab procedures](lab-procedures.md).
 
-**Firmware images** for the lab (OpenWrt / LibreMesh, `LG_IMAGE`, TFTP): [Manual firmware build](../tests/build-firmware-manual.md) (site nav: **Testing and firmware**).
+**Firmware images** for the lab (OpenWrt / LibreMesh, `LG_IMAGE`, TFTP): [Manual firmware build](build-firmware-manual.md).
 
 ---
 
@@ -51,14 +51,14 @@ Current support contacts:
 |----------|----------|
 | [lab-procedures.md](lab-procedures.md) | Unified pool, Ansible, SSH/serial, dynamic VLAN, TFTP, pytest. |
 | [rack-cheatsheets.md](rack-cheatsheets.md) | DUT table, ports, one-line serial/SSH, switch. |
-| [testbed-status.md](testbed-status.md) | Lab status TUI. |
+
 | [adding-dut-guide.md](adding-dut-guide.md) | DUT onboarding or replacement. |
 | [duts-config.md](../configuracion/duts-config.md) | DUTs, Internet, VLANs. |
 | [ansible-labgrid.md](../configuracion/ansible-labgrid.md) | Playbooks, inventory, tags. |
 | [tftp-server.md](../configuracion/tftp-server.md) | TFTP, symlinks, permissions. |
 | [observabilidad.md](../configuracion/observabilidad.md) | Prometheus, Grafana on the host. |
 | [grafana-public-access.md](../configuracion/grafana-public-access.md) | Grafana over HTTPS (VPS + tunnel). |
-| [build-firmware-manual.md](../tests/build-firmware-manual.md) | Manual OpenWrt / LibreMesh / per-DUT builds. |
+| [build-firmware-manual.md](build-firmware-manual.md) | Manual OpenWrt / LibreMesh / per-DUT builds. |
 
 ---
 
