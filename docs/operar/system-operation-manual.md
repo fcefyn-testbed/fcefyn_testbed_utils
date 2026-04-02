@@ -34,8 +34,8 @@ Current support contacts from FCEFyN:
 
 Auxiliar support contacts from our friends from related projects: 
 
-* [Paul Spooren](mail@aparcar.org) (openwrt-tests project owner)
-* [Ilario Gelmetti](iochesonome@gmail.com) (LibreMesh main representative)
+* [Paul Spooren](mailto:mail@aparcar.org) (openwrt-tests project owner)
+* [Ilario Gelmetti](mailto:iochesonome@gmail.com) (LibreMesh main representative)
 ---
 
 ## Stakeholders and consumers
