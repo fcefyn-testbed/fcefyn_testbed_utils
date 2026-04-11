@@ -3,8 +3,8 @@
 # Each DUT alias connects through its isolated VLAN interface.
 #
 # For mesh VLAN 200 debugging (e.g. test crash left DUT on VLAN 200):
-#   sudo labgrid-bound-connect vlan200 <mesh_ip> 22
-# Mesh IPs: belkin-1=10.13.200.11, belkin-2=10.13.200.196,
+#   sudo labgrid-bound-connect vlan200 <mesh_ssh_ip> 22
+# Mesh SSH/control IPs: belkin-1=10.13.200.11, belkin-2=10.13.200.196,
 #   belkin-3=10.13.200.118, bananapi=10.13.200.169,
 #   openwrt-one=10.13.200.120, librerouter-1=10.13.200.77
 #

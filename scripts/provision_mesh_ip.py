@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Provision persistent mesh networking on OpenWrt DUTs via serial console.
+Provision persistent mesh SSH/control networking on OpenWrt DUTs via serial console.
 
-Configures each DUT with the addresses needed for SSH access in mesh mode:
-  - Secondary IP 10.13.200.x on br-lan (SSH reachability)
+Configures each DUT with the addresses needed for host access in mesh mode:
+  - Secondary IP 10.13.200.x on br-lan (mesh SSH/control reachability)
   - Route 10.13.0.0/16 (host can reach the DUT)
   - Secondary IP 192.168.200.x on br-lan (gateway subnet, for mesh internet)
 
@@ -48,7 +48,7 @@ for _k, _v in list(DEFAULT_DEVICE_IP_MAP.items()):
 
 
 def load_pool_config(config_path: Path) -> list[tuple[str, str, int]]:
-    """Load (serial_port, mesh_ip, baud) for all DUTs from dut-config.yaml."""
+    """Load (serial_port, mesh_ssh_ip, baud) for all DUTs from dut-config.yaml."""
     if not config_path.exists():
         return []
     try:
@@ -69,7 +69,7 @@ def load_pool_config(config_path: Path) -> list[tuple[str, str, int]]:
 
 
 def resolve_ip(device_path: str, explicit_ip: str | None, config_path: Path) -> str | None:
-    """Resolve the mesh IP for the given device."""
+    """Resolve the mesh SSH/control IP for the given device."""
     if explicit_ip:
         return explicit_ip
     norm = device_path if device_path.startswith("/") else f"/dev/{device_path}"
@@ -95,9 +95,9 @@ def send_command(ser: serial.Serial, cmd: str, timeout: float = 3.0) -> str:
 
 
 def _build_uci_commands(ip: str) -> list[str]:
-    """Build UCI commands for mesh networking. Uses named sections for idempotency.
+    """Build UCI commands for mesh SSH/control networking. Uses named sections for idempotency.
 
-    Only provisions addresses and routes needed for SSH reachability:
+    Only provisions addresses and routes needed for host-side reachability:
     - lan_mesh interface (10.13.200.x on br-lan)
     - Host route 10.13.0.0/16 (on-link)
     - Gateway-subnet IP 192.168.200.x on lan (for MikroTik reachability in mesh)
@@ -172,7 +172,7 @@ def provision_one(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Provision persistent mesh IP (10.13.200.x) on OpenWrt DUTs via serial"
+        description="Provision persistent mesh SSH/control IP (10.13.200.x) on OpenWrt DUTs via serial"
     )
     parser.add_argument(
         "--device",
@@ -185,7 +185,7 @@ def main() -> int:
         action="store_true",
         help="Apply to all DUTs defined in dut-config.yaml (serial_port + libremesh_fixed_ip)",
     )
-    parser.add_argument("--ip", help="Mesh IP to assign (default: from dut-config or built-in map)")
+    parser.add_argument("--ip", help="Mesh SSH/control IP to assign (default: from dut-config or built-in map)")
     parser.add_argument("--config", default=None, type=Path, help="Path to dut-config.yaml")
     parser.add_argument("--baud", type=int, default=115200, help="Serial baud rate (used with --device)")
     parser.add_argument("--dry-run", action="store_true", help="Print actions without connecting")
@@ -215,13 +215,13 @@ def main() -> int:
 
     ip = resolve_ip(args.device, args.ip, config_path)
     if not ip:
-            print(f"ERROR: No IP for {args.device}. Use --ip or add to dut-config.yaml", file=sys.stderr)
+        print(f"ERROR: No IP for {args.device}. Use --ip or add to dut-config.yaml", file=sys.stderr)
         return 1
 
-    print(f"Device: {args.device} -> Mesh IP: {ip}")
+    print(f"Device: {args.device} -> Mesh SSH/control IP: {ip}")
     success = provision_one(args.device, ip, args.baud, args.dry_run)
     if success and not args.dry_run:
-        print(f"Done. DUT should be reachable at {ip} via SSH in mesh mode.")
+        print(f"Done. DUT should be reachable at {ip} via SSH on VLAN 200.")
     return 0 if success else 1
 
 

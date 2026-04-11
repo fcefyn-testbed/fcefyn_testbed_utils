@@ -14,6 +14,8 @@ switch:
   uplink_ports: [9, 10]  # always tagged for all active VLANs
 
 # DUT hardware database - physical facts per device
+# Note: `libremesh_fixed_ip` is the persistent mesh SSH/control IP on VLAN 200.
+# It is not the node's dynamic LibreMesh service IP used for mesh assertions.
 duts:
   belkin_rt3200_1:
     location: fcefyn-testbed

@@ -88,9 +88,9 @@ The exporter declares `NetworkService.address: "192.168.1.1%vlanXXX"` - the defa
 |---|---|---|
 | **openwrt-tests** | Labgrid `SSHDriver` -> `192.168.1.1%vlanXXX` | Isolated (default) |
 | **libremesh-tests** (single-node) | Same as openwrt-tests | Isolated (default) |
-| **libremesh-tests** (mesh) | Serial for setup, then direct SSH to mesh IPs (`10.13.200.x`) on vlan200 | Shared (fixture switches VLAN) |
+| **libremesh-tests** (mesh) | Serial for setup, then direct SSH to per-DUT mesh SSH/control IPs (`10.13.200.x`) on vlan200 | Shared (fixture switches VLAN) |
 
-Mesh tests bypass `SSHDriver` after the VLAN switch because the DUT acquires a mesh IP on a different subnet. The `mesh_vlan` fixture (section 4) handles the switch and restore.
+Mesh tests bypass `SSHDriver` after the VLAN switch because isolated-mode `192.168.1.1%vlanXXX` is no longer unique once multiple DUTs share VLAN 200. The host connects to each node through its per-DUT mesh SSH/control IP in `10.13.200.x`, while the actual LibreMesh assertions use the node's real `10.13.x.x` address on `br-lan`. The `mesh_vlan` fixture (section 4) handles the switch and restore.
 
 ### 3.5 Dynamic VLAN: the test that needs it changes it
 

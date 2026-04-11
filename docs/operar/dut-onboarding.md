@@ -75,7 +75,7 @@ In `fcefyn-testbed-utils/configs/dut-config.yaml`, add under `duts`:
     switch_port: 3                  # physical switch port
     switch_vlan_isolated: 106       # free VLAN (100-108)
     tftp_path: "belkin_rt3200_4/"
-    libremesh_fixed_ip: "10.13.200.XXX"   # LibreMesh fixed IP (avoid collisions)
+    libremesh_fixed_ip: "10.13.200.XXX"   # Mesh SSH/control IP on VLAN 200 (avoid collisions)
 ```
 
 For PoE DUTs: use a **single** PDUDaemon PDU name `fcefyn-poe` and set `pdu_index` to the switch PoE port number (same index passed to `poe_switch_control.py`). See `openwrt_one` and `librerouter_1` in `configs/dut-config.yaml` and `libremesh-tests` `ansible/files/exporter/labgrid-fcefyn/exporter.yaml`.
