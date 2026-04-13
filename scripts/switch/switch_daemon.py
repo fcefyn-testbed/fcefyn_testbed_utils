@@ -37,6 +37,7 @@ DEFAULT_SOCKET_PATH = "/tmp/switch-ssh.sock"
 DEFAULT_PID_PATH = "/tmp/switch-ssh.pid"
 MAX_MSG_SIZE = 65536
 RECONNECT_DELAY_SEC = 5
+RECONNECT_COOLDOWN_SEC = 3
 CONNECT_MAX_RETRIES = 3
 
 
@@ -118,6 +119,7 @@ class SwitchSSHDaemon:
             except Exception:
                 pass
             self._conn = None
+        time.sleep(RECONNECT_COOLDOWN_SEC)
         return self._connect_ssh()
 
     def _ensure_connected(self) -> bool:
@@ -194,8 +196,8 @@ class SwitchSSHDaemon:
                     return {"success": False,
                             "error": "SSH connection unavailable"}
                 try:
-                    output = self._conn.send_config_set(commands,
-                                                        cmd_verify=False)
+                    output = self._conn.send_config_set(
+                        commands, cmd_verify=False, read_timeout=30)
                     return {"success": True, "output": output}
                 except Exception as first_err:
                     logger.warning("send_config failed, reconnecting: %s",
@@ -203,8 +205,8 @@ class SwitchSSHDaemon:
                     if not self._reconnect_ssh():
                         return {"success": False,
                                 "error": f"Reconnect failed after: {first_err}"}
-                    output = self._conn.send_config_set(commands,
-                                                        cmd_verify=False)
+                    output = self._conn.send_config_set(
+                        commands, cmd_verify=False, read_timeout=30)
                     return {"success": True, "output": output}
         except Exception as e:
             logger.error("send_config failed after retry: %s", e)
@@ -217,7 +219,8 @@ class SwitchSSHDaemon:
                     return {"success": False,
                             "error": "SSH connection unavailable"}
                 try:
-                    output = self._conn.send_command(command)
+                    output = self._conn.send_command(command,
+                                                     read_timeout=30)
                     return {"success": True, "output": output}
                 except Exception as first_err:
                     logger.warning("send_command failed, reconnecting: %s",
@@ -225,7 +228,8 @@ class SwitchSSHDaemon:
                     if not self._reconnect_ssh():
                         return {"success": False,
                                 "error": f"Reconnect failed after: {first_err}"}
-                    output = self._conn.send_command(command)
+                    output = self._conn.send_command(command,
+                                                     read_timeout=30)
                     return {"success": True, "output": output}
         except Exception as e:
             logger.error("send_command failed after retry: %s", e)
