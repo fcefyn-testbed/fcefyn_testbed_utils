@@ -193,10 +193,21 @@ class SwitchSSHDaemon:
                 if not self._ensure_connected():
                     return {"success": False,
                             "error": "SSH connection unavailable"}
-                output = self._conn.send_config_set(commands, cmd_verify=False)
-                return {"success": True, "output": output}
+                try:
+                    output = self._conn.send_config_set(commands,
+                                                        cmd_verify=False)
+                    return {"success": True, "output": output}
+                except Exception as first_err:
+                    logger.warning("send_config failed, reconnecting: %s",
+                                   first_err)
+                    if not self._reconnect_ssh():
+                        return {"success": False,
+                                "error": f"Reconnect failed after: {first_err}"}
+                    output = self._conn.send_config_set(commands,
+                                                        cmd_verify=False)
+                    return {"success": True, "output": output}
         except Exception as e:
-            logger.error("send_config failed: %s", e)
+            logger.error("send_config failed after retry: %s", e)
             return {"success": False, "error": str(e)}
 
     def _exec_send_command(self, command: str) -> dict[str, Any]:
@@ -205,10 +216,19 @@ class SwitchSSHDaemon:
                 if not self._ensure_connected():
                     return {"success": False,
                             "error": "SSH connection unavailable"}
-                output = self._conn.send_command(command)
-                return {"success": True, "output": output}
+                try:
+                    output = self._conn.send_command(command)
+                    return {"success": True, "output": output}
+                except Exception as first_err:
+                    logger.warning("send_command failed, reconnecting: %s",
+                                   first_err)
+                    if not self._reconnect_ssh():
+                        return {"success": False,
+                                "error": f"Reconnect failed after: {first_err}"}
+                    output = self._conn.send_command(command)
+                    return {"success": True, "output": output}
         except Exception as e:
-            logger.error("send_command failed: %s", e)
+            logger.error("send_command failed after retry: %s", e)
             return {"success": False, "error": str(e)}
 
     def _shutdown(self, signum=None, frame=None):
