@@ -166,6 +166,22 @@ sudo systemctl daemon-reload && sudo systemctl enable --now arduino-relay-daemon
 
 Daemon commands: `start`, `stop`, `status`. PID `/tmp/arduino-relay.pid`, socket as above, log `/tmp/arduino-daemon.log` with `start_daemon.sh`.
 
+### 7.3 When to restart the daemon
+
+Restart is **not** part of normal operation. Do it when the serial device behind `/dev/arduino-relay` was recreated while the daemon kept an old file descriptor open.
+
+| Trigger | What happens |
+|---------|----------------|
+| USB hub unplugged or host USB port power-cycled | The kernel removes and re-adds the tty device; the daemon still writes to a dead FD. |
+| Physical USB cable swap or Arduino re-enumeration | Same as above. |
+
+Typical symptom: `arduino_relay_control.py status` (or any relay command) fails with **`Input/output error`** (often errno 5) while `systemctl status arduino-relay-daemon` still shows **active (running)** and the Unix socket exists.
+
+```bash
+sudo systemctl restart arduino-relay-daemon
+arduino_relay_control.py status
+```
+
 ## 8. Resolve the symlink
 
 ```bash

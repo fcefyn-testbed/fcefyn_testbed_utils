@@ -202,10 +202,10 @@ sequenceDiagram
 
 ### 6.1 Checklist
 
-* Generate WireGuard keypair on the lab host and send the public key to the maintainer (Matrix)
-* Receive WireGuard config from the maintainer (assigned IP, endpoint, server public key)
-* Apply tunnel on the host: Ansible role `wireguard` in `fcefyn_testbed_utils` or manual `wg0` config. See [section 9](#wireguard-ansible-fcefyn)
-* Verify tunnel: `sudo wg show wg0` (recent handshake)
+* ~~Generate WireGuard keypair on the lab host and send the public key to the maintainer (Matrix)~~ **Done**
+* ~~Receive WireGuard config from the maintainer (assigned IP, endpoint, server public key)~~ **Done** - IP `10.0.0.10/24`, endpoint `195.37.88.188:51820`
+* ~~Apply tunnel on the host: Ansible role `wireguard` in `fcefyn_testbed_utils`~~ **Done** - see [section 9](#wireguard-ansible-fcefyn)
+* ~~Verify tunnel: `sudo wg show wg0` (recent handshake)~~ **Done**
 * Per developer: generate personal ed25519 key ([5.2](#52-generate-ssh-key-for-new-developer)) and list `labs.<lab>.developers` + `developers.<github_user>.sshkey` in `labnet.yaml`
 * Prepare lab files: `exporter.yaml`, `netplan.yaml`, `dnsmasq.conf`, `pdudaemon.conf`
 * Document the lab in `docs/labs/<lab>.md` (upstream)
@@ -249,18 +249,16 @@ Role in `fcefyn_testbed_utils` to bring up the lab host tunnel toward the **glob
 |------|----------|
 | Role | `ansible/roles/wireguard/` |
 | Playbook that uses it | `ansible/playbook_testbed.yml` (comments and tag `wireguard`) |
-| Variables (placeholders) | `ansible/roles/wireguard/defaults/main.yml` |
+| Variables | `ansible/roles/wireguard/defaults/main.yml` |
 | Template | `ansible/roles/wireguard/templates/wg0.conf.j2` |
 | Service | `wg-quick@wg0` (enabled and started by the role) |
 
-**Variables to fill** (real values come from the maintainer after you send the lab public key): `wireguard_address`, `wireguard_peer_public_key`, `wireguard_peer_endpoint`, `wireguard_peer_allowed_ips` (default `10.0.0.0/24`), `wireguard_peer_keepalive`. The **private** key does not go in the repo: the role can generate it on the host if missing (`/etc/wireguard/private.key`) and prints the public key in Ansible output to share.
+Variables in `defaults/main.yml` hold the coordinator peer values (public key, endpoint, assigned IP `10.0.0.10/24`). The **private** key does not go in the repo: the role generates it on the host if missing (`/etc/wireguard/private.key`) and prints the public key in Ansible output to share with the maintainer.
 
-**Example run** (from repo `ansible/` directory, with proper inventory):
+**Run** (from `ansible/` directory):
 
 ```bash
-ansible-playbook playbook_testbed.yml --tags wireguard -l <lab_host>
+ansible-playbook playbook_testbed.yml --tags wireguard -K
 ```
-
-For manual tunnel or server-side detail, follow what was agreed with the upstream maintainer.
 
 ---
