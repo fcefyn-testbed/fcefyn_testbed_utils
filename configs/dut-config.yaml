@@ -89,8 +89,8 @@ duts:
     serial_speed: 115200
     ssh_alias: "dut-librerouter-1"
     pdu_host: "localhost:16421"
-    pdu_name: "fcefyn-poe"
-    pdu_index: 2
+    pdu_name: "fcefyn-arduino"
+    pdu_index: 4
     switch_port: 2
     switch_vlan_isolated: 105
     tftp_path: "librerouter_1/"
