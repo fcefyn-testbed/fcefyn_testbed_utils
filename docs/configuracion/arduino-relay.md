@@ -11,11 +11,29 @@ The Arduino Nano controls **11 channels** over USB-serial. Device: `/dev/arduino
 | 0-7 | Electromechanical relays (8-ch module, 5 V, opto) for DUTs |
 | 8-10 | SSR / Fotek: infrastructure (channel 8 wired no-load; cooler; PSU) |
 
-## 2. Hardware and channel map
+## 2. Automatic PSU power-on
+
+DUT relays (channels 0-7) switch the 12 V DC bus, which is powered by the PSU controlled on channel 10 (Fotek SSR). If the PSU is off, closing a DUT relay has no effect - there is no voltage on the bus.
+
+`arduino_relay_control.py` handles this dependency automatically: any `on` command targeting channels 0-7 queries `STATUS` first and turns channel 10 ON if it is off. This applies to both the daemon path and direct serial.
+
+| Scenario | Behavior |
+|----------|----------|
+| `on 0` with PSU already ON | No-op on channel 10, turns on channel 0 |
+| `on 0` with PSU OFF | Turns on channel 10 first, then channel 0 |
+| `on 8` or `on 9` | No PSU check (infrastructure channels, independent) |
+| `on 10` | Direct PSU control, no extra check |
+
+This means tests via PDUDaemon (`cmd_on: arduino_relay_control.py on %s`) work even if the rack was powered down - the first DUT power-on automatically starts the PSU.
+
+!!! note "PSU is not turned off automatically"
+    Turning off a DUT relay does **not** turn off the PSU. The PSU stays on until explicitly turned off (`arduino_relay_control.py off 10` or `all-off`).
+
+## 3. Hardware and channel map
 
 **Module and channel 10 PSU photos:** [Hardware catalog - Arduino relays](catalogo-hardware.md#arduino-rack-relays) and [AC supply (channel 10)](catalogo-hardware.md#ac-supply-channel-10-load).
 
-### 2.1 Infrastructure (SSR)
+### 3.1 Infrastructure (SSR)
 
 | Channel | Pin | Device | Hardware | Logic |
 |---------|-----|--------|----------|-------|
@@ -28,17 +46,17 @@ The Arduino Nano controls **11 channels** over USB-serial. Device: `/dev/arduino
 
 Per-channel AC box build (Omron **CH1-CH4**, Fotek): [AC control box (lab build)](#ac-control-box-lab-build).
 
-### 2.2 DUTs (mechanical relays)
+### 3.2 DUTs (mechanical relays)
 
 | Channels | Pins | Hardware |
 |----------|------|----------|
 | 0-7 | D2-D9 | 8-channel electromechanical relay module (5 V DC, optocoupled) |
 
-### 2.3 Module specifications
+### 3.3 Module specifications
 
 Manufacturer tables, load limits, and board data: [Hardware catalog - Arduino relays](catalogo-hardware.md#arduino-rack-relays).
 
-## 3. Physical wiring (DUTs - DC power)
+## 4. Physical wiring (DUTs - DC power)
 
 **12 V DC** cut by electromechanical relay (channels 0-7):
 
@@ -47,7 +65,7 @@ Manufacturer tables, load limits, and board data: [Hardware catalog - Arduino re
 | 12 V+ (PSU) | PSU V+ → relay COM bus → NO contact → DUT DC+ |
 | GND (PSU) | PSU GND → common GND bus → DUT GND (not switched) |
 
-## 4. Signal wiring (UTP)
+## 5. Signal wiring (UTP)
 
 UTP Cat5e/6, ~2 m: signals and common GND.
 
@@ -97,9 +115,9 @@ Serial **command channels** are **0-10** (`ON n`, `arduino_relay_control.py`). O
 | G3MB-202P | CH4 | — | — | No | None | No |
 | Fotek SSR-25DA | Single | 10 | D12 | Yes | PSU (AC branch) | Yes |
 
-Channels **0-9**: active low. Channel **10**: active high. Summary: [§2.1 Infrastructure (SSR)](#21-infrastructure-ssr).
+Channels **0-9**: active low. Channel **10**: active high. Summary: [§3.1 Infrastructure (SSR)](#31-infrastructure-ssr).
 
-## 5. Serial commands
+## 6. Serial commands
 
 Baud rate: **115200** bps.
 
@@ -124,11 +142,11 @@ arduino_relay_control.py status
 stty -F /dev/arduino-relay 115200 raw -echo && echo "ON 9 10" > /dev/arduino-relay
 ```
 
-## 6. Arduino Relay Daemon (`arduino_daemon.py`) {: #arduino-relay-daemon }
+## 7. Arduino Relay Daemon (`arduino_daemon.py`) {: #arduino-relay-daemon }
 
 Avoids Arduino reset when opening/closing the port: persistent serial connection, Unix socket `/tmp/arduino-relay.sock`. `arduino_relay_control.py` and PDUDaemon benefit when the service is enabled.
 
-### 6.1 systemd service (recommended)
+### 7.1 systemd service (recommended)
 
 Unit source: `configs/templates/arduino-relay-daemon.service` → `/etc/systemd/system/`.
 
@@ -139,7 +157,7 @@ sudo cp configs/templates/arduino-relay-daemon.service /etc/systemd/system/
 sudo systemctl daemon-reload && sudo systemctl enable --now arduino-relay-daemon
 ```
 
-### 6.2 Manual (testing)
+### 7.2 Manual (testing)
 
 ```bash
 ./scripts/arduino/start_daemon.sh
@@ -148,7 +166,7 @@ sudo systemctl daemon-reload && sudo systemctl enable --now arduino-relay-daemon
 
 Daemon commands: `start`, `stop`, `status`. PID `/tmp/arduino-relay.pid`, socket as above, log `/tmp/arduino-daemon.log` with `start_daemon.sh`.
 
-## 7. Resolve the symlink
+## 8. Resolve the symlink
 
 ```bash
 readlink -f /dev/arduino-relay
