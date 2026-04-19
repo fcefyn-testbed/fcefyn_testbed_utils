@@ -6,7 +6,7 @@ How the FCEFyN testbed integrates with the existing openwrt-tests ecosystem. Int
 
 ## 1. Starting point: openwrt-tests ecosystem
 
-Before the FCEFyN lab existed, [openwrt-tests](https://github.com/openwrt/openwrt-tests) already operated a global testing infrastructure:
+Before the FCEFyN lab existed, [openwrt-tests](https://github.com/aparcar/openwrt-tests) already operated a global testing infrastructure:
 
 - A **VM in a datacenter** (public IP) runs a `labgrid-coordinator` and a pool of GitHub Actions **self-hosted runners**.
 - **Remote labs** contributed by developers around the world each run a `labgrid-exporter`. They register their physical DUTs with the global coordinator over a **WireGuard** tunnel.
@@ -110,7 +110,7 @@ openwrt-tests runs single-node tests. Each DUT stays on its **isolated VLAN** (1
 
 libremesh-tests runs multi-node mesh tests. Participating DUTs must all be on **VLAN 200** to form a mesh. The test fixture switches each port to VLAN 200 at start and restores it on teardown. This is the only test suite that modifies VLAN state.
 
-See [Lab architecture](lab-architecture.md) for the full VLAN design and the `vlan_manager` API.
+See [Lab architecture](lab-architecture.md) for the full VLAN design and the `switch-vlan` CLI from [labgrid-switch-abstraction](https://github.com/fcefyn-testbed/labgrid-switch-abstraction).
 
 ### `LG_COORDINATOR` configuration
 
@@ -161,5 +161,5 @@ sequenceDiagram
 |------|-----------|
 | Understand how openwrt-tests CI runs step by step | [openwrt-tests CI flow](openwrt-tests-ci-flow.md) |
 | Set up the WireGuard tunnel and contribute hardware to openwrt-tests | [openwrt-tests onboarding](openwrt-tests-onboarding.md) |
-| VLAN design, `vlan_manager` API, switch configuration | [Lab architecture](lab-architecture.md) |
+| VLAN design, `switch-vlan` CLI, switch configuration | [Lab architecture](lab-architecture.md) |
 | Virtual mesh tests with QEMU and vwifi | [Virtual mesh](virtual-mesh.md) |

@@ -1,6 +1,6 @@
 # Lab architecture {: #lab-architecture }
 
-Technical design of the FCEFyN HIL testbed: one global coordinator shared with the openwrt-tests ecosystem, DUTs available for both [openwrt-tests](https://github.com/openwrt/openwrt-tests) and [libremesh-tests](https://github.com/libremesh/libremesh-tests), and dynamic VLAN as a per-test attribute.
+Technical design of the FCEFyN HIL testbed: one global coordinator shared with the openwrt-tests ecosystem, DUTs available for both [openwrt-tests](https://github.com/aparcar/openwrt-tests) and [libremesh-tests](https://github.com/fcefyn-testbed/libremesh-tests), and dynamic VLAN as a per-test attribute.
 
 ![Full testbed architecture](../img/diagrams/full_design.png)
 
@@ -127,27 +127,21 @@ Configured once and left alone:
 | dnsmasq | Instances for all VLANs (DHCP + TFTP) |
 | Gateway | Interfaces for all VLANs |
 
-## 4. `vlan_manager` API (labgrid-switch-abstraction)
+## 4. `switch-vlan` CLI (labgrid-switch-abstraction)
 
-Implementation lives in **[labgrid-switch-abstraction](https://github.com/fcefyn-testbed/labgrid-switch-abstraction)** (`switch_abstraction.vlan_manager`). It uses `SwitchClient` + the existing driver:
+Implementation lives in **[labgrid-switch-abstraction](https://github.com/fcefyn-testbed/labgrid-switch-abstraction)**: a `SwitchClient` + per-vendor driver, exposed as the `switch-vlan` CLI (with a `set_port_vlan(dut_name, vlan_id)` Python entry point underneath). DUT-to-port resolution comes from `dut-config.yaml` on the lab host.
 
-```python
-def set_port_vlan(dut_name, vlan_id, *, config_path=None):
-    """Switch a DUT port to the target VLAN. Thread-safe via flock."""
+```bash
+switch-vlan belkin_rt3200_1 200       # move to mesh
+switch-vlan belkin_rt3200_1 --restore  # restore isolated
+switch-vlan --restore-all              # restore all DUTs
 ```
 
-The primitive already exists on the driver interface: `assign_port_vlan_commands(port, vlan_id, mode, remove_vlans)`. Expose it as a high-level function with DUT-to-port resolution from `dut-config.yaml`.
+The primitive already exists on the driver interface (`assign_port_vlan_commands(port, vlan_id, mode, remove_vlans)`); the CLI adds DUT-name resolution and an `flock` to serialize concurrent runs (`/tmp/switch.lock`).
 
 ### Pytest fixture (libremesh-tests)
 
-```python
-@pytest.fixture
-def mesh_vlan(request):
-    """Switch DUT port to VLAN 200 before test, restore on teardown."""
-    set_port_vlan(dut_name, VLAN_MESH)
-    yield
-    set_port_vlan(dut_name, isolated_vlan)
-```
+`tests/conftest_vlan.py` shells out to `switch-vlan` (not the Python API directly): when `LG_PROXY` is set, the command runs on the lab host via SSH, so a remote developer never needs the switch driver or credentials locally. The fixture switches each DUT to VLAN 200 at setup and always restores the isolated VLAN at teardown.
 
 ## 5. Repository split
 
@@ -165,7 +159,7 @@ flowchart TB
     subgraph layer1 [Layer 1 - Switch Abstraction - contributable]
         DRV[switch_drivers/\ntplink_jetstream openwrt_ubus]
         SC[SwitchClient\nNetmiko]
-        VM["vlan_manager API\n(set_port_vlan)"]
+        VM["switch-vlan CLI\n(set_port_vlan)"]
         DRV --> SC
         SC --> VM
     end
@@ -193,7 +187,7 @@ flowchart TB
 
 ## 7. Switch Topology Daemon (future)
 
-The `vlan_manager` module in **[labgrid-switch-abstraction](https://github.com/fcefyn-testbed/labgrid-switch-abstraction)** is the library base for a daemon. If an HTTP API is needed (like PDUDaemon), add an HTTP server on top of `set_port_vlan()`. Internal logic stays the same.
+The library inside **[labgrid-switch-abstraction](https://github.com/fcefyn-testbed/labgrid-switch-abstraction)** is the base for a daemon. If an HTTP API is needed (like PDUDaemon), add an HTTP server on top of `set_port_vlan()`. Internal logic stays the same.
 
 ## 8. Trade-offs
 

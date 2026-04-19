@@ -1,6 +1,6 @@
 # Onboarding to openwrt-tests
 
-Process for contributing hardware from a local lab to the [openwrt-tests](https://github.com/openwrt/openwrt-tests) ecosystem. Covers architecture, exporter connection, SSH keys, Ansible, and the step sequence to integrate DUTs with the upstream coordinator.
+Process for contributing hardware from a local lab to the [openwrt-tests](https://github.com/aparcar/openwrt-tests) ecosystem. Covers architecture, exporter connection, SSH keys, Ansible, and the step sequence to integrate DUTs with the upstream coordinator.
 
 ---
 
