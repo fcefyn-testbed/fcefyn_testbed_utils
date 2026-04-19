@@ -16,6 +16,12 @@
 #   EOF
 #   sudo systemctl daemon-reload && sudo systemctl restart pdudaemon
 #
+# Option C: System-wide (multi-user labs with remote devs via SSH)
+#   sudo groupadd -f labgrid
+#   sudo usermod -aG labgrid <ssh-shared-user>
+#   sudo install -m 640 -g labgrid <this-file> /etc/switch.conf
+#   Loaded automatically when no per-user ~/.config/switch.conf exists.
+#
 
 SWITCH_PASSWORD=switch_password_here
 SWITCH_HOST=<switch-ip>
