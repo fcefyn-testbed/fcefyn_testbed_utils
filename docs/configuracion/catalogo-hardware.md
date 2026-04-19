@@ -284,7 +284,7 @@ Lab orchestration host is a **Lenovo ThinkPad T430** notebook with **Ubuntu**: L
   <p class="rack-gallery__caption" data-rack-caption></p>
 </div>
 
-For **logs** when boot fails in multi-node tests (libremesh-tests, `mesh_boot_node`), see [LibreMesh testing approach](https://github.com/francoriba/libremesh-tests/blob/main/docs/libremesh-testing-approach.md#mesh-boot-logs) (libremesh-tests repo).
+For **logs** when boot fails in multi-node tests (libremesh-tests, `mesh_boot_node`), see [LibreMesh testing approach](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/docs/libremesh-testing-approach.md#mesh-boot-logs) (libremesh-tests repo).
 
 ## Testbed gateway (TP-Link TL-WDR3500)
 

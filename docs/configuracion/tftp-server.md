@@ -80,8 +80,8 @@ flowchart TB
 
 Each device folder under `firmwares/` contains two subdirectories:
 
-- **`openwrt/`** — Official OpenWrt from downloads.openwrt.org or local build without LibreMesh feeds. Filenames keep the `openwrt-*` prefix (e.g. `openwrt-vanilla-24.10.5-...`).
-- **`libremesh/`** — Images built with LiMe/LibreMesh feeds. Filenames use `lime-*` prefix (e.g. `lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb`).
+- **`openwrt/`** - Official OpenWrt from downloads.openwrt.org or local build without LibreMesh feeds. Filenames keep the `openwrt-*` prefix (e.g. `openwrt-vanilla-24.10.5-...`).
+- **`libremesh/`** - Images built with LiMe/LibreMesh feeds. Filenames use `lime-*` prefix (e.g. `lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb`).
 
 DUT folder names must match `external` in exporter.yaml.
 

@@ -105,14 +105,14 @@ UTP Cat5e/6, ~2 m: signals and common GND.
 Serial **command channels** are **0-10** (`ON n`, `arduino_relay_control.py`). On the **Omron G3MB-202P**, silkscreen **CH1-CH4** map as below.
 
 * **Cmd ch** = arduino sketch
-* **—** = no Arduino output for that module channel
+* **N/A** = no Arduino output for that module channel
 
 | Module | Omron CH | Cmd ch | Pin | AC box wired | Load | Arduino signal |
 |--------|----------|--------|-----|--------------|------|----------------|
 | G3MB-202P | CH1 | 8 | D10 | Yes | None | Yes |
 | G3MB-202P | CH2 | 9 | D11 | Yes | AC cooler | Yes |
-| G3MB-202P | CH3 | — | — | Yes | None | No |
-| G3MB-202P | CH4 | — | — | No | None | No |
+| G3MB-202P | CH3 | N/A | N/A | Yes | None | No |
+| G3MB-202P | CH4 | N/A | N/A | No | None | No |
 | Fotek SSR-25DA | Single | 10 | D12 | Yes | PSU (AC branch) | Yes |
 
 Channels **0-9**: active low. Channel **10**: active high. Summary: [§3.1 Infrastructure (SSR)](#31-infrastructure-ssr).

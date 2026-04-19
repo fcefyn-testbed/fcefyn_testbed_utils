@@ -153,6 +153,42 @@ arduino_relay_control.py on 4 # Librerouter 1 (relay, not PoE)
 !!! note "Running with sudo"
     Both `poe_switch_control.py` and `switch-vlan` read config from the home of the user who invoked sudo (`SUDO_USER`). If you run `sudo switch-vlan libremesh`, password comes from `/home/<user>/.config/switch.conf`, not `/root/.config/`.
 
+#### Multi-user setup (recommended for labs with remote devs)
+
+Remote developers SSH as a shared user (e.g. `labgrid-dev`), not as the lab admin. For `switch-vlan` to work for any SSH user without per-user duplication, install the conf system-wide. `labgrid-switch-abstraction` reads `/etc/switch.conf` automatically as fallback when no per-user `~/.config/switch.conf` exists (see `client.py` in [labgrid-switch-abstraction](https://github.com/fcefyn-testbed/labgrid-switch-abstraction)).
+
+```bash
+sudo groupadd -f labgrid
+sudo usermod -aG labgrid <admin-user>
+sudo usermod -aG labgrid <ssh-shared-user>   # e.g. labgrid-dev
+sudo install -m 640 -g labgrid /home/<admin>/.config/switch.conf /etc/switch.conf
+
+# Optional: symlink the admin's per-user conf to the system-wide one to keep one source of truth
+mv ~/.config/switch.conf ~/.config/switch.conf.bak
+ln -s /etc/switch.conf ~/.config/switch.conf
+```
+
+Group changes only apply to **new** sessions: log out and SSH in again so the `labgrid` group is loaded (verify with `id`). Existing sessions keep the old group set.
+
+The shared lock file `/tmp/switch.lock` (used to serialize SSH sessions to the switch) must also be group-writable so any user in `labgrid` can acquire it:
+
+```bash
+sudo rm -f /tmp/switch.lock
+sudo install -m 0664 -g labgrid /dev/null /tmp/switch.lock
+
+# Persist across reboots (systemd-tmpfiles recreates /tmp at boot)
+sudo tee /etc/tmpfiles.d/switch-lock.conf >/dev/null <<'EOF'
+f /tmp/switch.lock 0664 root labgrid -
+EOF
+sudo systemd-tmpfiles --create
+```
+
+Verify from a remote machine (no local switch credentials needed):
+
+```bash
+ssh <lab-host> 'whoami; ls -la /etc/switch.conf /tmp/switch.lock; switch-vlan --help'
+```
+
 !!! note "PoE and concurrent SSH sessions"
     PDUDaemon may invoke several `poe_switch_control.py` in parallel (multiple PoE DUTs). TP-Link firmware **does not reliably tolerate** concurrent SSH sessions (timeouts). The script serializes access with a lock (`/tmp/switch.lock`, `fcntl.flock`); background calls queue.
 
