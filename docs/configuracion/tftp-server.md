@@ -57,7 +57,8 @@ VLAN and DUT mapping: [rack-cheatsheets.md](../operar/rack-cheatsheets.md).
 | Type | Path | Purpose |
 |------|------|---------|
 | Per-DUT folder | `/srv/tftp/<place>/` (e.g. `belkin_rt3200_1/`, `openwrt_one/`) | Symlinks to firmware. Symlink name = U-Boot TFTP filename. |
-| Real firmware | `/srv/tftp/firmwares/<device>/` | Downloaded `.itb`/`.bin`. One file can serve several DUTs of the same type. |
+| Real firmware | `/srv/tftp/firmwares/<device>/{openwrt,libremesh}/` | Firmware files organized by build origin. One file can serve several DUTs of the same type. |
+| Labgrid cache | `/var/cache/labgrid/<user>/<sha256>/` | Auto-uploaded images from remote developers or CI (see [section 4.2](#42-remote-image-staging)). |
 
 ```mermaid
 flowchart TB
@@ -71,7 +72,16 @@ flowchart TB
     root --> firm["firmwares/"]
     firm --> f1["belkin_rt3200/"]
     firm --> f2["openwrt_one/"]
+    f1 --> f1ow["openwrt/"]
+    f1 --> f1lm["libremesh/"]
+    f2 --> f2ow["openwrt/"]
+    f2 --> f2lm["libremesh/"]
 ```
+
+Each device folder under `firmwares/` contains two subdirectories:
+
+- **`openwrt/`** — Official OpenWrt from downloads.openwrt.org or local build without LibreMesh feeds. Filenames keep the `openwrt-*` prefix (e.g. `openwrt-vanilla-24.10.5-...`).
+- **`libremesh/`** — Images built with LiMe/LibreMesh feeds. Filenames use `lime-*` prefix (e.g. `lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb`).
 
 DUT folder names must match `external` in exporter.yaml.
 
@@ -94,6 +104,50 @@ TFTPProvider:
 
 The user running tests needs **write permission** on each DUT folder so Labgrid can create symlinks.
 
+### 4.2 Remote image staging (developer laptops and CI) {: #42-remote-image-staging }
+
+When a developer runs tests **from a laptop** (not the lab host), `LG_IMAGE` points to a **local file on the laptop**:
+
+```bash
+# On the developer's laptop
+export LG_IMAGE=$HOME/builds/lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb
+export LG_PLACE=labgrid-fcefyn-openwrt_one
+export LG_PROXY=labgrid-fcefyn
+uv run pytest tests/test_base.py -v
+```
+
+The image does not exist on the lab server, but the DUT needs to download it via TFTP. Labgrid handles this transparently through `TFTPProviderDriver.stage()`:
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer laptop
+    participant Coord as Coordinator
+    participant Lab as Lab host
+    participant DUT as DUT (U-Boot)
+
+    Dev->>Coord: pytest connects (LG_PROXY)
+    Dev->>Dev: stage() computes SHA-256 of local image
+    Dev->>Lab: SCP: image → /var/cache/labgrid/<user>/<hash>/<filename>
+    Lab->>Lab: symlink /srv/tftp/<place>/<filename> → cached file
+    Lab->>DUT: U-Boot TFTP download from <place>/<filename>
+    DUT->>DUT: Boot
+```
+
+| Step | What happens |
+|------|--------------|
+| 1. `get_image_path("root")` | Resolves `$LG_IMAGE` to the local path on the laptop. |
+| 2. `stage(local_path)` | Hashes the file (SHA-256). If the hash already exists in `/var/cache/labgrid/` on the lab host, skips the upload. Otherwise copies it via SCP. |
+| 3. Symlink | Creates a symlink in the DUT's `internal` directory (e.g. `/srv/tftp/openwrt_one/<filename>`) pointing at the cached file. |
+| 4. `setenv bootfile` | Sets the U-Boot bootfile to `<external>/<filename>` so the DUT can TFTP-download it. |
+
+**This enables developers to test custom-built images** without manually copying files to the server. Build your image locally, point `LG_IMAGE` at it, and Labgrid handles the rest.
+
+!!! note "Cache location"
+    Uploaded images land in `/var/cache/labgrid/<ssh_user>/<sha256>/<original_filename>`. The cache grows over time; see [section 7](#7-retention-and-cleanup) for cleanup.
+
+!!! note "Pre-positioned vs staged images"
+    Images under `/srv/tftp/firmwares/` are **pre-positioned**: they live permanently on the server and `LG_IMAGE` points directly at them. Staged images under `/var/cache/labgrid/` are **uploaded on demand** by Labgrid when the path in `LG_IMAGE` is local to the machine running pytest. Both end up as symlinks in the per-DUT folder; the DUT does not know the difference.
+
 ---
 
 ## 5. Adding firmware
@@ -110,35 +164,42 @@ sudo chown -R USER:USER /srv/tftp/belkin_rt3200_1/ /srv/tftp/belkin_rt3200_2/ /s
 
 ### 5.2 Procedure
 
-1. **Download** under firmwares by device type:
+1. **Download** under `firmwares/<device>/openwrt/` or `firmwares/<device>/libremesh/`:
 
    ```bash
-   sudo mkdir -p /srv/tftp/firmwares/openwrt_one
-   sudo wget -O /srv/tftp/firmwares/openwrt_one/openwrt_one_initramfs.itb \
-     https://downloads.openwrt.org/snapshots/targets/mediatek/filogic/openwrt-24.10.0-rc2-mediatek-filogic-openwrt_one-initramfs.itb
+   # Vanilla OpenWrt
+   sudo mkdir -p /srv/tftp/firmwares/openwrt_one/openwrt
+   sudo wget -O /srv/tftp/firmwares/openwrt_one/openwrt/openwrt-vanilla-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb \
+     https://downloads.openwrt.org/releases/24.10.5/targets/mediatek/filogic/openwrt-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb
+
+   # LibreMesh (rename openwrt-* to lime-* for clarity)
+   sudo mkdir -p /srv/tftp/firmwares/openwrt_one/libremesh
+   sudo cp /path/to/build/openwrt-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb \
+     /srv/tftp/firmwares/openwrt_one/libremesh/lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb
    ```
 
 2. **Create symlink** in the DUT folder. The symlink name must match **exactly** what U-Boot requests over TFTP:
 
    ```bash
-   ln -sf /srv/tftp/firmwares/openwrt_one/openwrt_one_initramfs.itb \
-     /srv/tftp/openwrt_one/openwrt-24.10.0-rc2-mediatek-filogic-openwrt_one-initramfs.itb
+   ln -sf /srv/tftp/firmwares/openwrt_one/libremesh/lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb \
+     /srv/tftp/openwrt_one/lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb
    ```
 
    For several DUTs of the same type (Belkin 1, 2, 3): one symlink per DUT folder pointing at the same file.
 
-3. **LG_IMAGE** with path to the symlink in the DUT folder:
+3. **LG_IMAGE** with path to the firmware file (Labgrid creates the symlink automatically via `stage()`):
 
    ```bash
-   export LG_IMAGE=/srv/tftp/openwrt_one/openwrt-24.10.0-rc2-mediatek-filogic-openwrt_one-initramfs.itb
+   export LG_IMAGE=/srv/tftp/firmwares/openwrt_one/libremesh/lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb
    ```
 
 ### 5.3 Quick rules
 
-- Real files → always under `firmwares/<device>/`. Never in DUT folders.
+- Real files → always under `firmwares/<device>/openwrt/` or `firmwares/<device>/libremesh/`. Never in DUT folders.
+- LibreMesh images → use `lime-*` prefix. Vanilla OpenWrt → keep `openwrt-*` or `openwrt-vanilla-*` prefix.
 - Symlinks → only in DUT folders. Use absolute paths.
 - Verify: `readlink -f /srv/tftp/<dut>/<symlink>` must resolve to an existing file.
-- `tree -L 3 /srv/tftp`: blue symlinks = ok, red = broken.
+- `tree -L 4 /srv/tftp/firmwares`: check structure; `tree -L 3 /srv/tftp`: blue symlinks = ok, red = broken.
 
 ### 5.4 Remove broken symlinks
 
@@ -181,20 +242,24 @@ tftp 192.168.104.1 -c get openwrt_one/openwrt-24.10.0-rc2-mediatek-filogic-openw
 
 ## 7. Retention and cleanup
 
-Policies to keep `/srv/tftp/firmwares/` from growing forever. Initial values; refine with ops experience.
+Policies to keep `/srv/tftp/firmwares/` and `/var/cache/labgrid/` from growing forever. Initial values; refine with ops experience.
 
 | Policy | Rule |
 |--------|------|
 | Max images per device | 3 (current + 2 previous) |
 | Max age | 90 days since last CI use |
 | Disk alert | Warn if `/srv/tftp/firmwares/` exceeds 10 GB |
+| Labgrid cache alert | Warn if `/var/cache/labgrid/` exceeds 20 GB |
 | Cleanup mechanism | Manual (admin review); future: cron script |
 
 ### Manual cleanup procedure
 
 ```bash
-# Disk usage
+# Disk usage (pre-positioned firmwares)
 du -sh /srv/tftp/firmwares/*/
+
+# Disk usage (Labgrid auto-uploaded cache)
+du -sh /var/cache/labgrid/*/
 
 # List images by age (oldest first)
 find /srv/tftp/firmwares/ -type f -printf '%T+ %p\n' | sort
@@ -203,8 +268,11 @@ find /srv/tftp/firmwares/ -type f -printf '%T+ %p\n' | sort
 # 1. Find symlinks to the file
 find /srv/tftp/ -type l -lname '*<filename>' -print
 # 2. If none, delete
-sudo rm /srv/tftp/firmwares/<device>/<filename>
+sudo rm /srv/tftp/firmwares/<device>/<subdir>/<filename>
 # 3. Clean resulting broken symlinks (section 5.4)
+
+# Clean old Labgrid cache entries (no active symlinks should point here)
+find /var/cache/labgrid/ -maxdepth 2 -type d -mtime +90 -exec rm -rf {} +
 ```
 
 See also [Lab architecture](../diseno/lab-architecture.md) for lab and CI design context.

@@ -157,9 +157,10 @@ On the host:
 
 ```bash
 sudo mkdir -p /srv/tftp/belkin_rt3200_4
-# Copy firmware to device type firmwares dir
+# Place firmware under firmwares/<device>/{openwrt,libremesh}/
 # Symlink with U-Boot expected name (see tftp-server.md)
-ln -sf /srv/tftp/firmwares/linksys_e8450/openwrt-*.bin /srv/tftp/belkin_rt3200_4/linksys_e8450-initramfs-kernel.bin
+ln -sf /srv/tftp/firmwares/belkin_rt3200/libremesh/lime-24.10.5-mediatek-mt7622-linksys_e8450-initramfs-kernel.bin \
+  /srv/tftp/belkin_rt3200_4/lime-24.10.5-mediatek-mt7622-linksys_e8450-initramfs-kernel.bin
 ```
 
 See [tftp-server](../configuracion/tftp-server.md) for naming per device.

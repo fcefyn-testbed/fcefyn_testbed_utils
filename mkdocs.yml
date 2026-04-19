@@ -87,6 +87,7 @@ nav:
       - Adding a DUT: operar/dut-onboarding.md
       - Build firmware: operar/build-firmware-manual.md
       - Wake-on-LAN: operar/wake-on-lan-setup.md
+      - Developer remote access: operar/developer-remote-access.md
       - ZeroTier remote access: operar/zerotier-remote-access.md
   - Component configuration:
       - Hardware and rack reference:

@@ -19,14 +19,14 @@ TFTP dirs belong to **`labgrid-dev`**. For Labgrid to create symlinks when runni
 ## Single-node test (one DUT)
 
 ```bash
-# OpenWrt
+# OpenWrt vanilla
 LG_PLACE=labgrid-fcefyn-belkin_rt3200_1 \
-LG_IMAGE=/srv/tftp/belkin_rt3200_1/linksys_e8450-initramfs-kernel.bin \
+LG_IMAGE=/srv/tftp/firmwares/belkin_rt3200/openwrt/openwrt-23.05.5-vanilla-mediatek-mt7622-linksys_e8450-ubi-initramfs-recovery.itb \
 uv run pytest tests/test_base.py tests/test_lan.py -v
 
 # LibreMesh (fixture moves DUT VLAN to 200 automatically)
 LG_PLACE=labgrid-fcefyn-belkin_rt3200_1 \
-LG_IMAGE=/srv/tftp/belkin_rt3200_1/lime-linksys_e8450-initramfs-kernel.bin \
+LG_IMAGE=/srv/tftp/firmwares/belkin_rt3200/libremesh/lime-24.10.5-mediatek-mt7622-linksys_e8450-initramfs-kernel.bin \
 uv run pytest tests/test_libremesh.py tests/test_lan.py -v
 ```
 
@@ -38,24 +38,32 @@ The libremesh-tests fixture moves DUT VLANs to 200 automatically (via `labgrid-s
 
 ```bash
 LG_MESH_PLACES="labgrid-fcefyn-openwrt_one,labgrid-fcefyn-bananapi_bpi-r4,labgrid-fcefyn-librerouter_1,labgrid-fcefyn-belkin_rt3200_2" \
-LG_IMAGE_MAP="openwrt_one=/srv/tftp/.../openwrt-one-initramfs.itb,..." \
+LG_IMAGE_MAP="labgrid-fcefyn-openwrt_one=/srv/tftp/firmwares/openwrt_one/libremesh/lime-24.10.5-mediatek-filogic-openwrt_one-initramfs.itb,labgrid-fcefyn-bananapi_bpi-r4=/srv/tftp/firmwares/bananapi_bpi-r4/libremesh/lime-24.10.5-mediatek-filogic-bananapi_bpi-r4-initramfs-recovery.itb,labgrid-fcefyn-librerouter_1=/srv/tftp/firmwares/librerouter_librerouter_v1/libremesh/lime-24.10.5-ath79-generic-librerouter_librerouter-v1-initramfs-kernel.bin,labgrid-fcefyn-belkin_rt3200_2=/srv/tftp/firmwares/belkin_rt3200/libremesh/lime-24.10.5-mediatek-mt7622-linksys_e8450-initramfs-kernel.bin" \
 LG_MESH_KEEP_POWERED=1 \
 uv run pytest tests/test_mesh.py -v
 ```
 
 `LG_MESH_KEEP_POWERED=1` leaves DUTs powered after the test (VLANs are still restored to isolated). SSH via alias: `ssh dut-belkin-rt3200-2`.
 
-### Robustness mechanisms
+---
 
-Multi-node tests include several layers of automatic recovery:
+## Running from a developer laptop
 
-| Mechanism | Scope | Description |
-|-----------|-------|-------------|
-| Boot retries | Per node | Up to 3 attempts per node. Failures in U-Boot activation, TFTP download, and post-shell stages are retriable. |
-| U-Boot proactive interrupt | Per node | Single-byte interrupt chars (`\x1b` ESC or `\x03` Ctrl-C) are sent proactively during boot to ensure U-Boot is captured before autoboot. |
-| IP watchdog | Per node | Background script on the DUT re-applies the fixed SSH IP on `br-lan` every 3s for 300s, surviving network restarts. |
-| SSH transport retry | Per node | `SSHProxy` retries up to 3 times on SSH exit code 255 (transport errors during mesh convergence). |
-| Network settle | Global | After all nodes boot, a convergence window (60s base + 20s per extra node beyond 3) waits for batman-adv/babeld routing to stabilize. |
+A developer can run tests from their own machine using `LG_PROXY` to reach the lab. `LG_IMAGE` points to a **local file on the laptop**; Labgrid uploads it to the lab server automatically (see [TFTP staging](../configuracion/tftp-server.md#42-remote-image-staging)).
+
+```bash
+# On the developer laptop (not the lab host)
+cd ~/pi/libremesh-tests
+export LG_PLACE=labgrid-fcefyn-bananapi_bpi-r4
+export LG_PROXY=labgrid-fcefyn
+export LG_IMAGE=$HOME/builds/lime-24.10.5-mediatek-filogic-bananapi_bpi-r4-initramfs-recovery.itb
+export LG_ENV=targets/bananapi_bpi-r4.yaml
+uv run pytest tests/test_base.py -v --log-cli-level=INFO
+```
+
+The image is uploaded via SCP to `/var/cache/labgrid/<user>/<sha256>/` on the lab host, and a symlink is created in the DUT's TFTP directory. Subsequent runs with the same image skip the upload (hash match).
+
+**Requirements:** the developer's SSH key must be in `labnet.yaml` (see [openwrt-tests onboarding](../diseno/openwrt-tests-onboarding.md#52-generate-ssh-key-for-new-developer)), and the lab host must be reachable via `LG_PROXY`.
 
 ---
 
