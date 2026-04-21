@@ -1,0 +1,48 @@
+---
+# Role: tftp_cleanup
+# Deploys a systemd timer that prunes broken TFTP symlinks daily and removes
+# orphan labgrid cache directories older than tftp_cleanup_retention_days.
+
+- name: Ensure /usr/local/sbin exists
+  ansible.builtin.file:
+    path: /usr/local/sbin
+    state: directory
+    mode: "0755"
+
+- name: Deploy tftp-cleanup script
+  ansible.builtin.template:
+    src: tftp-cleanup.sh.j2
+    dest: /usr/local/sbin/tftp-cleanup
+    owner: root
+    group: root
+    mode: "0755"
+  notify: tftp_cleanup_restart_timer
+
+- name: Deploy tftp-cleanup.service unit
+  ansible.builtin.template:
+    src: tftp-cleanup.service.j2
+    dest: /etc/systemd/system/tftp-cleanup.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - tftp_cleanup_reload_systemd
+    - tftp_cleanup_restart_timer
+
+- name: Deploy tftp-cleanup.timer unit
+  ansible.builtin.template:
+    src: tftp-cleanup.timer.j2
+    dest: /etc/systemd/system/tftp-cleanup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - tftp_cleanup_reload_systemd
+    - tftp_cleanup_restart_timer
+
+- name: Enable and start tftp-cleanup.timer
+  ansible.builtin.systemd:
+    name: tftp-cleanup.timer
+    enabled: true
+    state: started
+    daemon_reload: true

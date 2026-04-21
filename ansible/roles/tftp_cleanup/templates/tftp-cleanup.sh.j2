@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# Managed by ansible role tftp_cleanup. Do not edit by hand.
+#
+# Prunes:
+#   1. Broken symlinks anywhere under TFTP_DIR.
+#   2. Orphan labgrid cache directories under CACHE_DIR whose mtime is older
+#      than RETENTION_DAYS and which no symlink under TFTP_DIR points into.
+#
+# Never touches real firmware files under TFTP_DIR (only dangling symlinks).
+# Logs a summary to stdout so systemd captures it in the journal.
+
+set -euo pipefail
+
+TFTP_DIR="{{ tftp_cleanup_tftp_dir }}"
+CACHE_DIR="{{ tftp_cleanup_cache_dir }}"
+RETENTION_DAYS="{{ tftp_cleanup_retention_days }}"
+DRY_RUN={{ 'true' if tftp_cleanup_dry_run else 'false' }}
+
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY_RUN=true ;;
+        -h|--help)
+            cat <<EOF
+Usage: $(basename "$0") [--dry-run]
+
+Prunes broken symlinks under ${TFTP_DIR} and orphan labgrid cache
+directories under ${CACHE_DIR} older than ${RETENTION_DAYS} days.
+EOF
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg" >&2
+            exit 2
+            ;;
+    esac
+done
+
+log() {
+    echo "[tftp-cleanup] $*"
+}
+
+human_bytes() {
+    local bytes="$1"
+    numfmt --to=iec --suffix=B "$bytes" 2>/dev/null || echo "${bytes}B"
+}
+
+###############################################################################
+# 1. Broken symlinks under TFTP_DIR
+###############################################################################
+
+broken_removed=0
+if [[ -d "$TFTP_DIR" ]]; then
+    while IFS= read -r -d '' link; do
+        log "broken symlink: $link -> $(readlink "$link")"
+        broken_removed=$((broken_removed + 1))
+        if [[ "$DRY_RUN" == "true" ]]; then
+            continue
+        fi
+        rm -f -- "$link"
+    done < <(find "$TFTP_DIR" -xtype l -print0)
+else
+    log "TFTP_DIR does not exist: $TFTP_DIR (skipping symlink prune)"
+fi
+
+###############################################################################
+# 2. Orphan labgrid cache directories older than RETENTION_DAYS
+###############################################################################
+
+cache_dirs_removed=0
+cache_bytes_freed=0
+
+if [[ -d "$CACHE_DIR" ]]; then
+    # Collect every file currently referenced by any symlink under TFTP_DIR.
+    # These files (and their parent dirs) must be preserved even if old.
+    referenced_file="$(mktemp)"
+    trap 'rm -f "$referenced_file"' EXIT
+    if [[ -d "$TFTP_DIR" ]]; then
+        while IFS= read -r -d '' link; do
+            target="$(readlink -f -- "$link" 2>/dev/null || true)"
+            if [[ -n "$target" ]]; then
+                printf '%s\n' "$target" >> "$referenced_file"
+            fi
+        done < <(find "$TFTP_DIR" -type l -print0)
+    fi
+
+    # Iterate every cache leaf directory: CACHE_DIR/<user>/<sha>/.
+    while IFS= read -r -d '' cache_leaf; do
+        # Skip if still fresh (any file inside younger than RETENTION_DAYS).
+        if find "$cache_leaf" -type f -mtime -"$RETENTION_DAYS" -print -quit | grep -q .; then
+            continue
+        fi
+
+        # Skip if any referenced file lives inside this leaf.
+        leaf_real="$(readlink -f -- "$cache_leaf")"
+        if [[ -s "$referenced_file" ]] && grep -q -F "${leaf_real}/" "$referenced_file"; then
+            continue
+        fi
+
+        size_bytes="$(du -sb "$cache_leaf" 2>/dev/null | awk '{print $1}')"
+        size_bytes="${size_bytes:-0}"
+
+        log "orphan cache: $cache_leaf ($(human_bytes "$size_bytes"))"
+        cache_dirs_removed=$((cache_dirs_removed + 1))
+        cache_bytes_freed=$((cache_bytes_freed + size_bytes))
+
+        if [[ "$DRY_RUN" == "true" ]]; then
+            continue
+        fi
+
+        rm -rf -- "$cache_leaf"
+    done < <(find "$CACHE_DIR" -mindepth 2 -maxdepth 2 -type d -print0)
+
+    # Best-effort: drop now-empty <user>/ parents.
+    if [[ "$DRY_RUN" != "true" ]]; then
+        find "$CACHE_DIR" -mindepth 1 -maxdepth 1 -type d -empty -delete || true
+    fi
+else
+    log "CACHE_DIR does not exist: $CACHE_DIR (skipping cache prune)"
+fi
+
+###############################################################################
+# Summary
+###############################################################################
+
+if [[ "$DRY_RUN" == "true" ]]; then
+    log "summary (dry-run): broken_symlinks_would_remove=${broken_removed} orphan_cache_dirs_would_remove=${cache_dirs_removed} bytes_would_free=$(human_bytes "$cache_bytes_freed")"
+else
+    log "summary (live): broken_symlinks_removed=${broken_removed} orphan_cache_dirs_removed=${cache_dirs_removed} bytes_freed=$(human_bytes "$cache_bytes_freed")"
+fi

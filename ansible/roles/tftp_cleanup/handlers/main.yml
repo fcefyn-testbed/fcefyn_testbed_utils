@@ -1,0 +1,11 @@
+---
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  listen: tftp_cleanup_reload_systemd
+
+- name: Restart tftp-cleanup timer
+  ansible.builtin.systemd:
+    name: tftp-cleanup.timer
+    state: restarted
+  listen: tftp_cleanup_restart_timer

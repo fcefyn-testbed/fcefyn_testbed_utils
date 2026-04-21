@@ -1,0 +1,11 @@
+[Unit]
+Description=Run tftp-cleanup.service on schedule
+
+[Timer]
+OnCalendar={{ tftp_cleanup_schedule }}
+Persistent=true
+RandomizedDelaySec=15min
+Unit=tftp-cleanup.service
+
+[Install]
+WantedBy=timers.target

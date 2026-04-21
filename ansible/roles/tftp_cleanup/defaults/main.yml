@@ -1,0 +1,22 @@
+---
+# Role: tftp_cleanup
+# Defaults for the TFTP and labgrid-cache cleanup timer.
+
+# Root served by dnsmasq. Broken symlinks under this tree are pruned.
+tftp_cleanup_tftp_dir: /srv/tftp
+
+# Labgrid auto-upload destination (rsync/scp target from stage()).
+# Orphan <user>/<sha>/ directories older than retention_days are pruned here.
+tftp_cleanup_cache_dir: /var/cache/labgrid
+
+# A cache directory is deleted only if it is orphan (no symlink under
+# tftp_cleanup_tftp_dir resolves inside it) AND its mtime is older than
+# this threshold in days.
+tftp_cleanup_retention_days: 30
+
+# systemd OnCalendar= expression. Default runs once per day.
+tftp_cleanup_schedule: "daily"
+
+# If true, the timer runs the script with --dry-run (logs actions, removes nothing).
+# Flip to true when validating the role on a fresh host.
+tftp_cleanup_dry_run: false

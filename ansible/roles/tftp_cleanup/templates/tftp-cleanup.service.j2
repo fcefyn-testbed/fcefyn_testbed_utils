@@ -1,0 +1,17 @@
+[Unit]
+Description=Prune broken TFTP symlinks and orphan labgrid cache entries
+Documentation=https://github.com/coronati-delacruz-pi/fcefyn_testbed_utils/blob/main/docs/configuracion/tftp-server.md
+ConditionPathIsDirectory={{ tftp_cleanup_tftp_dir }}
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/tftp-cleanup
+Nice=10
+IOSchedulingClass=idle
+
+# Hardening: script only needs to read/write the two managed trees.
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true
+ReadWritePaths={{ tftp_cleanup_tftp_dir }} {{ tftp_cleanup_cache_dir }}
