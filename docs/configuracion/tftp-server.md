@@ -242,38 +242,71 @@ tftp 192.168.104.1 -c get openwrt_one/openwrt-24.10.0-rc2-mediatek-filogic-openw
 
 ## 7. Retention and cleanup
 
-Policies to keep `/srv/tftp/firmwares/` and `/var/cache/labgrid/` from growing forever. Initial values; refine with ops experience.
+Two trees need attention:
 
-| Policy | Rule |
-|--------|------|
-| Max images per device | 3 (current + 2 previous) |
-| Max age | 90 days since last CI use |
-| Disk alert | Warn if `/srv/tftp/firmwares/` exceeds 10 GB |
-| Labgrid cache alert | Warn if `/var/cache/labgrid/` exceeds 20 GB |
-| Cleanup mechanism | Manual (admin review); future: cron script |
+| Tree | Growth | Managed by |
+|------|--------|------------|
+| `/srv/tftp/firmwares/<device>/<subdir>/` | Slow, admin-curated. Real firmware files. | Manual. |
+| `/srv/tftp/<place>/` | Symlinks only. Stale links appear when a target is renamed or removed. | `tftp-cleanup.timer`. |
+| `/var/cache/labgrid/<user>/<sha>/` | Grows every test run (labgrid rsync/scp). New hash per firmware build. | `tftp-cleanup.timer`. |
 
-### Manual cleanup procedure
+### 7.1 Automated cleanup: `tftp-cleanup.timer`
+
+The Ansible role [`ansible/roles/tftp_cleanup`](https://github.com/coronati-delacruz-pi/fcefyn_testbed_utils/tree/main/ansible/roles/tftp_cleanup) installs a systemd timer on the host. It runs `/usr/local/sbin/tftp-cleanup` on schedule and prunes:
+
+1. **Broken symlinks** anywhere under `/srv/tftp/`. Recreated automatically on the next test run, so deletion is safe.
+2. **Orphan labgrid cache directories** under `/var/cache/labgrid/<user>/<sha>/` that are both older than `tftp_cleanup_retention_days` AND not referenced by any symlink under `/srv/tftp/`. Labgrid re-uploads on the next `stage()` if needed.
+
+Files under `/srv/tftp/firmwares/` are **never** touched.
+
+**Defaults** (override via `-e` or group vars):
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `tftp_cleanup_tftp_dir` | `/srv/tftp` | Tree scanned for broken symlinks. |
+| `tftp_cleanup_cache_dir` | `/var/cache/labgrid` | Tree scanned for orphan cache dirs. |
+| `tftp_cleanup_retention_days` | `30` | Min age before a cache dir becomes eligible. |
+| `tftp_cleanup_schedule` | `daily` | systemd `OnCalendar=` expression. |
+| `tftp_cleanup_dry_run` | `false` | When `true`, script logs only. |
+
+Deploy:
 
 ```bash
-# Disk usage (pre-positioned firmwares)
-du -sh /srv/tftp/firmwares/*/
+ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags tftp_cleanup -K
+```
 
-# Disk usage (Labgrid auto-uploaded cache)
-du -sh /var/cache/labgrid/*/
+Inspect:
+
+```bash
+systemctl status tftp-cleanup.timer
+systemctl list-timers tftp-cleanup.timer
+journalctl -u tftp-cleanup.service --since '7 days ago'
+```
+
+Force an out-of-band run (dry-run first recommended):
+
+```bash
+sudo /usr/local/sbin/tftp-cleanup --dry-run
+sudo systemctl start tftp-cleanup.service
+```
+
+### 7.2 Manual firmware curation
+
+`/srv/tftp/firmwares/` is outside the timer's scope. Operators rotate it by hand when a build is obsolete:
+
+```bash
+# Disk usage per device
+du -sh /srv/tftp/firmwares/*/
 
 # List images by age (oldest first)
 find /srv/tftp/firmwares/ -type f -printf '%T+ %p\n' | sort
 
-# Delete obsolete image (check no symlinks point to it)
-# 1. Find symlinks to the file
+# Check no symlinks point to the candidate before deleting
 find /srv/tftp/ -type l -lname '*<filename>' -print
-# 2. If none, delete
 sudo rm /srv/tftp/firmwares/<device>/<subdir>/<filename>
-# 3. Clean resulting broken symlinks (section 5.4)
-
-# Clean old Labgrid cache entries (no active symlinks should point here)
-find /var/cache/labgrid/ -maxdepth 2 -type d -mtime +90 -exec rm -rf {} +
 ```
+
+Any symlinks left dangling after a manual delete are picked up by `tftp-cleanup.timer` on its next run.
 
 See also [Lab architecture](../diseno/lab-architecture.md) for lab and CI design context.
 

@@ -17,6 +17,7 @@ Configuration of the host (Lenovo T430, Ubuntu) as the HIL orchestration server.
 | **SSH to DUTs** | `labgrid-bound-connect vlanNNN 192.168.1.1 22` | Connects to DUT on its isolated VLAN. See [SSH access to DUTs](../operar/dut-ssh-access.md). |
 | **udev** | `/etc/udev/rules.d/99-serial-devices.rules` | Per-DUT serial symlinks (`/dev/belkin-rt3200-1`, etc.). |
 | **TFTP** | `/srv/tftp/<place>/` | Firmware per place. See [tftp-server](tftp-server.md). |
+| **TFTP cleanup** | Ansible role `tftp_cleanup` + `tftp-cleanup.timer` | Daily prune of broken TFTP symlinks and orphan `/var/cache/labgrid/` entries older than 30 days. See [tftp-server §7.1](tftp-server.md#71-automated-cleanup-tftp-cleanuptimer). |
 | **ZeroTier** | Ansible role `zerotier` | Admin-only remote access to host via VPN. See [8.3](#83-remote-access-zerotier-for-admins-proxyjump-for-developers). |
 | **WireGuard** | Ansible role `wireguard` | Tunnel to openwrt-tests global coordinator (upstream SSH jump host for developers and CI). See [8.3.1](#831-wireguard-global-coordinator). |
 | **Wake-on-LAN** | BIOS + ethtool + `wol.service` | Power on the host from off over LAN. See [wake-on-lan-setup](../operar/wake-on-lan-setup.md). |
@@ -629,5 +630,15 @@ ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --t
 ```
 
 **Variable:** `wol_interface` (default: `enp0s25`). Prerequisite: BIOS Wake on LAN = AC Only.
+
+### 8.5 TFTP and labgrid cache cleanup
+
+`ansible/roles/tftp_cleanup` installs `/usr/local/sbin/tftp-cleanup` and a systemd timer (`tftp-cleanup.timer`, `OnCalendar=daily`). The script prunes broken symlinks under `/srv/tftp/` and removes orphan `/var/cache/labgrid/<user>/<sha>/` directories older than `tftp_cleanup_retention_days` (default 30). `/srv/tftp/firmwares/` is never touched. Full detail and tunables: [tftp-server §7](tftp-server.md#7-retention-and-cleanup).
+
+```bash
+ansible-playbook -i ansible/inventory/hosts.yml ansible/playbook_testbed.yml --tags tftp_cleanup -K
+```
+
+Inspection: `systemctl list-timers tftp-cleanup.timer` · `journalctl -u tftp-cleanup.service --since '7 days ago'`.
 
 ---
