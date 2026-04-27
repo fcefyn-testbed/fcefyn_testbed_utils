@@ -34,8 +34,8 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{seria
 SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="BG02Q8N1", \
   SYMLINK+="openwrt-one", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
 
-# Belkin RT3200 #1 - FTDI, serial BG01PX0S
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="BG01PX0S", \
+# Belkin RT3200 #1 - FTDI, serial BG00W3CV (unique serial; any hub port)
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="BG00W3CV", \
   SYMLINK+="belkin-rt3200-1", MODE="0666", GROUP="dialout", ENV{ID_MM_DEVICE_IGNORE}="1"
 
 # Librerouter 1  - FTDI, serial BG01PX0W

@@ -394,7 +394,7 @@ Adapters map to hub ports as follows:
 | Hub port | Device       | Chip   | Symlink         | Strategy   |
 |----------|--------------|--------|-----------------|--------------|
 | 1          | Arduino Nano      | FTDI   | arduino-relay   | Serial       |
-| 2          | Belkin RT3200 #1  | CP210x | belkin-rt3200-1 | Port (KERNELS) |
+| 2          | Belkin RT3200 #1  | FTDI   | belkin-rt3200-1 | Serial       |
 | 3          | Belkin RT3200 #2  | CH340  | belkin-rt3200-2 | Port       |
 | 4          | Belkin RT3200 #3  | CH340  | belkin-rt3200-3 | Port       |
 | 5          | Banana Pi R4      | FTDI   | bpi-r4          | Serial       |
@@ -415,8 +415,8 @@ SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{seria
 **By USB port (fixed):** Devices without unique serial. Keep adapter on the same hub port. Use `KERNELS` wildcards (`*-1.1`, `*-1.2`, …) so rules work if USB bus numbers change across reboots.
 
 ```udev
-SUBSYSTEM=="tty", KERNELS=="*-1.1", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", \
-  SYMLINK+="belkin-rt3200-1", MODE="0666", GROUP="dialout"
+SUBSYSTEM=="tty", KERNELS=="*-1.2", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", \
+  SYMLINK+="belkin-rt3200-2", MODE="0666", GROUP="dialout"
 ```
 
 ### 7.5 Identifying new devices
