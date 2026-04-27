@@ -202,6 +202,15 @@ Belkin uses UBI layout; mtd "rootfs_data" is not a separate mtd (UBI volume 5). 
 
 Use [**mtk_uartboot**](https://github.com/981213/mtk_uartboot) + serial + TFTP to rewrite fixed bootloader, no JTAG.
 
+#### CRITICAL: `reset` vs BL2 error `Failed to load image id 3 (-2)`
+
+Until **option 8 (preloader)** and **option 7 (FIP)** have **finished writing to NAND**, a **full chip reboot** loads **BL2 from flash again**. That BL2 then tries to load **image id 3** (BL31/FIP) from NAND. If that region is still missing or corrupt, you get **`ERROR: BL2: Failed to load image id 3 (-2)`** and **you never reach U-Boot**. This is expected; it is not a “lost `setenv`” problem.
+
+- **Do not run `reset`** from the shell and **do not power-cycle** between option 8 and option 7, or **before** both completes. Use **only** the recovery menu’s **option 9 (Reboot)** (or equivalent) **after** both writes succeed.
+- **`setenv serverip` / `setenv ipaddr`** apply to the **current U-Boot in RAM** (from `mtk_uartboot`). They are enough for TFTP in **that same session**. You do **not** need `saveenv` to flash options 8 and 7 in one uartboot session. (`saveenv` is optional; avoid it if unsure.)
+- If you already **`reset`** and see **BL2: Failed to load image id 3**: **run `mtk_uartboot` again** — that is the **only** way back to U-Boot until NAND is fixed.
+- If you are at **`MT7622>`** and need the **menu** again **without** resetting the chip: try **`bootmenu`** or **`help`** and look for a menu command. If nothing works, **`mtk_uartboot` again** and press **Down arrow** **immediately** when U-Boot starts (step 3 below) **before** spending time in the shell.
+
 #### Prerequisites
 
 - **USB-serial adapter:** Use a **reliable** 3.3 V TTL adapter for this flow. **CH340** adapters often complete the BootROM handshake then **time out** while uploading the BL2 payload (`sending payload...` / panic in `bootrom.rs`) because they drop bytes under sustained traffic. **FT232RNL** (or another genuine **FTDI** / **CP210x** known to work at **460800+**) is strongly recommended. Plug the adapter **directly** into the PC when possible; long chains of **USB hubs** make CH340 failures more likely. See [USB-TTL serial adapters](catalogo-hardware.md#usb-ttl-serial-adapters).
@@ -214,7 +223,7 @@ Use [**mtk_uartboot**](https://github.com/981213/mtk_uartboot) + serial + TFTP t
   - [`mtk_uartboot`](https://github.com/981213/mtk_uartboot) - Linux binary.
 - TFTP: `sudo apt install tftpd-hpa`. Configure `/etc/default/tftpd-hpa` with `TFTP_DIRECTORY="/srv/tftpboot"`, `TFTP_ADDRESS=":69"`, `TFTP_OPTIONS="--secure"`.
 - Copy preloader and FIP to `/srv/tftpboot/`.
-- Static IP 192.168.1.254/24 on Ethernet: `sudo ip addr add 192.168.1.254/24 dev <interface>; sudo ip link set <interface> up`.
+- **PC Ethernet on the same L2 as U-Boot:** U-Boot expects TFTP at **`192.168.1.254`** while the DUT uses **`192.168.1.1`**. If the PC still has another subnet on that cable (e.g. `192.168.0.5`), TFTP fails with **ARP Retry count exceeded**. Flush and set **`192.168.1.254/24`** on the correct interface. Generic commands: [Belkin U-Boot TFTP — PC Ethernet IP](../operar/belkin-uboot-tftp-pc-network.md).
 - Serial permissions: `sudo usermod -a -G dialout $USER` (logout/login).
 - Restart TFTP: `sudo systemctl restart tftpd-hpa`.
 
@@ -230,7 +239,7 @@ Use [**mtk_uartboot**](https://github.com/981213/mtk_uartboot) + serial + TFTP t
 
 2. **Power on the router** right after pressing Enter. In a few seconds the handshake should complete and BL2 should start loading the FIP.
 
-3. **In screen:** press down arrow to interrupt autoboot and enter U-Boot menu.
+3. **In screen:** as soon as U-Boot starts, press **Down arrow** repeatedly to **interrupt autoboot** and open the **recovery menu** (do this **before** a long stop at `MT7622>` if you want options 7/8). If you are already at `MT7622>`, run **`bootmenu`** if available (`help` lists commands), or re-run **mtk_uartboot** and catch the menu earlier. Optionally run `setenv serverip 192.168.1.254` and `setenv ipaddr 192.168.1.1` **before** choosing option 8 so TFTP does not use a stale `192.168.200.1` from the lab.
 
 4. **Write preloader (option 8):** choose "8. Load BL2 preloader via TFTP then write to flash". Wait "Loading..." → "Erasing..." → "Writing 131072 byte(s)..." four times (offsets 0x0, 0x20000, 0x40000, 0x60000). Press Enter to return to menu.
 
@@ -243,7 +252,7 @@ Use [**mtk_uartboot**](https://github.com/981213/mtk_uartboot) + serial + TFTP t
 #### Notes
 
 - If **mtk_uartboot** panics with **Operation timed out** right after `sending payload...`, the cause is almost always the **USB-serial chip** (CH340 + hubs) or wiring; switching to **FT232RNL** fixed this in lab practice (April 2026).
-- If ARP retry fails: in U-Boot run `setenv ethaddr 00:11:22:33:44:55; saveenv`.
+- If **ARP retry** fails on TFTP: first confirm the **PC** has **`192.168.1.254`** on the Ethernet port cabled to the router (`ip addr flush` + add, see [Belkin U-Boot TFTP — PC Ethernet IP](../operar/belkin-uboot-tftp-pc-network.md)). If the link is correct but ARP still fails, try in U-Boot: `setenv ethaddr 00:11:22:33:44:55; saveenv`.
 - If it does not boot after process, repeat 1-6 (sometimes two attempts).
 - Verify: after boot, `grep "(release)" /dev/mtd0ro` should show v2.4 or fixed version.
 - Once applied, fix is permanent and OKD should not recur.
