@@ -66,6 +66,25 @@ From the **orchestration host** (same machine as Labgrid). Requires `~/.ssh/conf
 
 ---
 
+## Switch and power scripts
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `scripts/switch/poe_switch_control.py` | Control PoE ports on the TP-Link switch | `python3 scripts/switch/poe_switch_control.py off 1` |
+| `scripts/switch/dut_gateway.py` | Update default gateway on DUTs via SSH after VLAN change | `python3 scripts/switch/dut_gateway.py --dut belkin_rt3200` |
+
+```bash
+# Power cycle OpenWRT One (PoE port 1)
+python3 scripts/switch/poe_switch_control.py off 1
+sleep 3
+python3 scripts/switch/poe_switch_control.py on 1
+
+# Set SWITCH_PASSWORD env var or use ~/.config/switch.conf
+export SWITCH_PASSWORD=yourpassword
+```
+
+---
+
 ## TP-Link SG2016P switch
 
 | Field | Value |
