@@ -37,6 +37,24 @@ LibreMesh feeds, `menuconfig`, lime packages, QEMU/vwifi: [build-firmware-manual
 
 ---
 
+## CI workflow quick reference
+
+Trigger a firmware build and test from GitHub Actions without touching the lab manually.
+
+**Go to:** GitHub → Actions → **Build LibreMesh and Test on DUT** → Run workflow
+
+| Input | Example | Notes |
+|-------|---------|-------|
+| `duts` | `belkin_rt3200` or `all` | Comma-separated or `all` |
+| `lime_ref` | `v2024.1` | Branch, tag, or commit SHA |
+| `openwrt_version` | `23.05.5` | Must match `lime_ref` |
+| `extra_packages` | `luci-app-dawn` | Prefix with `-` to remove |
+| `config_file` | `firmware/configs/belkin_rt3200.conf` | Optional, injected as `/etc/config/<name>` |
+
+The `flash_and_test` job runs on the **T430Runner** (`testbed-fcefyn`). Full guide: [CI: Build & Test](ci-build-and-test.md).
+
+---
+
 ## SSH: Oracle VPS and OpenWrt gateway
 
 From the **orchestration host** (same machine as Labgrid). Requires `~/.ssh/config` per repo templates.
@@ -45,6 +63,25 @@ From the **orchestration host** (same machine as Labgrid). Requires `~/.ssh/conf
 |--------|---------|-------|
 | **Oracle VPS** (Nginx / Grafana tunnel) | `ssh oracle-vps` | Host `oracle-vps`: public IP, typical user `ubuntu`, dedicated key. Provisioning: [public Grafana](../configuracion/grafana-public-access.md). |
 | **Gateway** (OpenWrt on trunk, e.g. WDR3500) | `ssh gateway-openwrt` | `Host gateway-openwrt` with `HostName 192.168.100.254`, `User root`. In mesh, `192.168.200.254` also works. Detail: [gateway §5.5](../configuracion/gateway.md#55-ssh-access-to-gateway-from-host). |
+
+---
+
+## Switch and power scripts
+
+| Script | Purpose | Example |
+|--------|---------|---------|
+| `scripts/switch/poe_switch_control.py` | Control PoE ports on the TP-Link switch | `python3 scripts/switch/poe_switch_control.py off 1` |
+| `scripts/switch/dut_gateway.py` | Update default gateway on DUTs via SSH after VLAN change | `python3 scripts/switch/dut_gateway.py --dut belkin_rt3200` |
+
+```bash
+# Power cycle OpenWRT One (PoE port 1)
+python3 scripts/switch/poe_switch_control.py off 1
+sleep 3
+python3 scripts/switch/poe_switch_control.py on 1
+
+# Set SWITCH_PASSWORD env var or use ~/.config/switch.conf
+export SWITCH_PASSWORD=yourpassword
+```
 
 ---
 

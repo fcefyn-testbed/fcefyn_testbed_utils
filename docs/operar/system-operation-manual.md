@@ -78,6 +78,7 @@ Automation of necessary operations is achieved using:
 
 - **Ansible:** `ansible/playbook_labgrid.yml` (exporter, places, users). See [ansible-labgrid](../configuracion/ansible-labgrid.md).
 - **Dynamic VLAN:** `labgrid-switch-abstraction` (used by libremesh-tests in CI); manual ops: `switch-vlan`. Details in [Lab architecture](../diseno/lab-architecture.md).
+- **CI firmware build:** `build-and-test-libremesh.yml` compiles lime-packages from a specific git ref using the OpenWrt SDK and ImageBuilder on GitHub-hosted runners, then runs libremesh-tests on the physical DUTs via the `testbed-fcefyn` self-hosted runner. Triggered manually. See [CI: Build & Test](ci-build-and-test.md).
 
 ---
 

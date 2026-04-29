@@ -136,3 +136,26 @@ systemctl status arduino-relay-daemon
 # Restart exporter
 sudo systemctl restart labgrid-exporter
 ```
+
+---
+
+## Verify CI runner {: #verify-ci-runner }
+
+```bash
+# Check runner service
+sudo systemctl status actions.runner.*
+
+# Restart runner
+sudo systemctl restart actions.runner.*
+```
+
+The runner should show **Idle** in GitHub → Settings → Actions → Runners.
+If a `flash_and_test` job is queued but never starts, check that the runner is online
+and that the DUT is not locked by a previous run:
+
+```bash
+labgrid-client reservations   # check for stale reservations
+labgrid-client -p <place> unlock  # release if needed
+```
+
+See [CI runner](../configuracion/ci-runner.md) for full setup and troubleshooting.

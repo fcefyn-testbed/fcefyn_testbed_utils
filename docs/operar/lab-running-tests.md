@@ -69,6 +69,24 @@ The test suite locates `labnet.yaml` via `LABNET_PATH`, `OPENWRT_TESTS_DIR/labne
 
 ---
 
+## Using CI-built firmware in tests
+
+The `build-and-test-libremesh.yml` workflow builds a firmware artifact and runs `flash_and_test` automatically. If you want to run the tests manually with a firmware built by CI:
+
+1. Go to GitHub → Actions → **Build LibreMesh and Test on DUT** → select a run
+2. Download the artifact `firmware-<dut>-<lime_ref>-<sha>`
+3. Extract the `.bin` or `.itb` file and point `LG_IMAGE` to it:
+
+```bash
+LG_PLACE=labgrid-fcefyn-belkin_rt3200_1 \
+LG_IMAGE=/path/to/openwrt-23.05.5-mediatek-mt7622-linksys_e8450-squashfs-sysupgrade.bin \
+uv run pytest tests/ -v
+```
+
+Artifacts are kept for 7 days. For automated end-to-end runs, trigger the workflow directly — it handles the full build → flash → test pipeline without manual steps.
+
+---
+
 ## Remote coordinator access (openwrt-tests)
 
 ```bash

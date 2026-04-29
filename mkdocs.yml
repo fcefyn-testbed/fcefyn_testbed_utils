@@ -87,6 +87,8 @@ nav:
       - Routine operations: operar/lab-routine-operations.md
       - Adding a DUT: operar/dut-onboarding.md
       - Build firmware: operar/build-firmware-manual.md
+      - "CI: Build & Test": operar/ci-build-and-test.md
+      - Virtual mesh (local): operar/virtual-mesh-local.md
       - Wake-on-LAN: operar/wake-on-lan-setup.md
       - ZeroTier (admin-only): operar/zerotier-remote-access.md
   - Component configuration:
@@ -113,5 +115,7 @@ nav:
       - openwrt-tests onboarding: diseno/openwrt-tests-onboarding.md
       - Contributing a new lab: diseno/new-lab-contribution.md
       - openwrt-tests CI flow: diseno/openwrt-tests-ci-flow.md
+      - lime-packages CI build: diseno/lime-packages-ci-flow.md
+      - lime-packages CI tests: diseno/lime-packages-test-flow.md
       - Virtual mesh: diseno/virtual-mesh.md
   - Demos: demos.md

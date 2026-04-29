@@ -21,3 +21,16 @@ Relationship between orchestration host, switch, gateway, DUTs, power, and seria
 ![High-level diagram of the testbed and main components](img/diagrams/general-design-overview.png)
 
 The design builds on the **remote lab** model from [openwrt-tests](https://github.com/aparcar/openwrt-tests), but scope is not limited to **adding devices** to that network. It also **reuses and extends** the approach with **local infrastructure**, along the same axes (orchestration, network, power, serial) with a focus on **LibreMesh** testing.
+
+---
+
+## Quick actions
+
+| I want to… | Go to |
+|---|---|
+| Run tests on lab hardware from my machine | [Developer quickstart](operar/developer-remote-access.md) |
+| Build a LibreMesh firmware and test it automatically | [CI: Build & Test](operar/ci-build-and-test.md) |
+| SSH into a DUT | [SSH access to DUTs](operar/dut-ssh-access.md) |
+| Check the rack layout and device IPs | [Rack quick reference](operar/rack-cheatsheets.md) |
+| Build firmware manually | [Build firmware](operar/build-firmware-manual.md) |
+| Add a new device to the lab | [Adding a DUT](operar/dut-onboarding.md) |
