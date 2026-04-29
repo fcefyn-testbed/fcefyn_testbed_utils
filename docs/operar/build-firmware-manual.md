@@ -182,6 +182,34 @@ Firmware appears under `bin/` as in standard OpenWrt.
 
 ---
 
+## Pre-built firmwares (`firmwares/`)
+
+The `firmwares/` directory in this repo contains pre-built images ready to use in the lab without compiling. Useful for quick tests or when the build pipeline is unavailable.
+
+```
+firmwares/
+├── belkin_rt3200/
+│   ├── libremesh/    ← LibreMesh images (initramfs + sysupgrade)
+│   └── openwrt/      ← Stock OpenWrt images
+├── bananapi_bpi-r4/
+├── librerouter_librerouter-v1/
+├── openwrt_one/
+├── tplink-wdr3500/
+└── qemu/
+```
+
+Each device folder has:
+
+| File pattern | Purpose |
+|---|---|
+| `*initramfs*.bin` / `*initramfs*.itb` | TFTP boot — loads into RAM, flash untouched |
+| `*sysupgrade*.bin` / `*sysupgrade*.itb` | Flash write via `sysupgrade` |
+| `*sdcard*.img.gz` | SD card image (Banana Pi R4 only) |
+
+To use a pre-built initramfs in tests, set `LG_IMAGE` to the file path. See [Running tests](lab-running-tests.md).
+
+---
+
 ## Automatic builds via PR (lime-packages fork)
 
 The **fcefyn-testbed/lime-packages** fork includes `.github/workflows/build-firmware.yml`: on pull requests (and manual dispatch), GitHub Actions builds a **local lime_packages feed** with the OpenWrt SDK, then one **firmware image per row** in `.github/ci/targets.yml` using ImageBuilder. Successful runs upload **`firmware-<device>.*`** and **`lime-feed-<arch>`** artifacts.
