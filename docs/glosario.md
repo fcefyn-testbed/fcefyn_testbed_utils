@@ -59,7 +59,7 @@ Key terms used across the FCEFyN testbed documentation.
 : An OpenWrt-based firmware distribution for community mesh networks. Includes batman-adv, babeld, shared-state, and other mesh networking components. The primary firmware under test in this lab.
 
 **lime-packages**
-: The GitHub repository (`fcefyn-testbed/lime-packages`) that contains the LibreMesh CI workflow (`build-firmware.yml`). Builds firmware, runs tests, and publishes results.
+: The GitHub repository (`libremesh/lime-packages`) that contains the LibreMesh CI workflow (`build-firmware.yml`). Builds firmware, runs tests, and publishes results.
 
 **ImageBuilder (OpenWrt)**
 : Container that assembles OpenWrt firmware images from pre-compiled packages (without rebuilding the kernel). The workflow's `build-image` stage uses it to combine the lime-packages feed with the base rootfs for each target/release.

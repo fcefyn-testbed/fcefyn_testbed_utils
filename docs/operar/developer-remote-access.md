@@ -95,7 +95,7 @@ ssh -o ConnectTimeout=15 labgrid-fcefyn whoami       # hop 2 -> labgrid-dev
 mkdir -p ~/pi && cd ~/pi
 
 # 1. Clone libremesh-tests (LibreMesh single-node, multi-node, QEMU)
-git clone https://github.com/fcefyn-testbed/libremesh-tests.git
+git clone https://github.com/libremesh/libremesh-tests.git
 
 # 2. Clone openwrt-tests as sibling (provides labnet.yaml)
 git clone https://github.com/aparcar/openwrt-tests.git

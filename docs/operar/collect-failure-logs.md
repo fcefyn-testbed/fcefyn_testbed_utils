@@ -16,7 +16,7 @@ Every test job uploads a `test-results-<scope>` artifact (retention: 14 days). P
 Download from the run's "Summary" page → "Artifacts", or via CLI:
 
 ```sh
-gh run download <run-id> -R fcefyn-testbed/lime-packages -n test-results-<place>-<release>
+gh run download <run-id> -R libremesh/lime-packages -n test-results-<place>-<release>
 unzip test-results-*.zip
 ls -la                                  # see what came in the bundle
 ```
@@ -91,7 +91,7 @@ The issue reopens on subsequent failures and adds a comment with each new failur
 List them:
 
 ```sh
-gh issue list -R fcefyn-testbed/lime-packages --label healthcheck --state all
+gh issue list -R libremesh/lime-packages --label healthcheck --state all
 ```
 
 ## 5. Putting it together

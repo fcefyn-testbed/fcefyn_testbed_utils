@@ -1,7 +1,7 @@
 
 # lime-packages CI: firmware build pipeline
 
-How the **fcefyn-testbed/lime-packages** fork builds per-device LibreMesh
+How **libremesh/lime-packages** builds per-device LibreMesh
 images in GitHub Actions. Covers the matrix, the two-stage build, multi-
 version OpenWrt support, the QEMU virtual path, and DTB patches.
 
@@ -41,8 +41,8 @@ flowchart LR
 Each job is keyed on `<device, openwrt_release>`; matrices in
 [targets.yml][tg] drive the entire pipeline.
 
-[prep]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/prepare_matrix.sh
-[tg]: https://github.com/fcefyn-testbed/lime-packages/blob/master/.github/ci/targets.yml
+[prep]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/prepare_matrix.sh
+[tg]: https://github.com/libremesh/lime-packages/blob/master/.github/ci/targets.yml
 
 ---
 
@@ -110,7 +110,7 @@ to a specific commit.
   `batctl-default`; otherwise the artifact is rejected as a vanilla
   OpenWrt build.
 
-[bi]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/build_image.sh
+[bi]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/build_image.sh
 
 ---
 
@@ -196,8 +196,8 @@ SPI-NAND `partitions { ... }` block to the legacy 23.05 layout
 diagnosis.
 
 [nvmem]: https://github.com/openwrt/openwrt/issues/22858
-[lmpatch]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/patch_dtb_local_mac.py
-[partpatch]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/patch_dtb_partitions.py
+[lmpatch]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/patch_dtb_local_mac.py
+[partpatch]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/patch_dtb_partitions.py
 [belkin-doc]: lime-packages/belkin-rt3200-dtb.md
 
 ---

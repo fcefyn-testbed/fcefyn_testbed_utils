@@ -85,7 +85,7 @@ TAP and user mode are **equivalent** for the control channel (SSH host→VM):
 | ubuntu-latest limit | **3 nodes** | 2-core, 7GB RAM; 5 nodes failed in prior experiments |
 | self-hosted limit | **5 nodes** | More CPU/RAM available |
 | Tests in pull_requests | **Yes (QEMU/vwifi)** | Single-node + 3-node mesh on ubuntu-latest, no lab time |
-| Workflow location | **`pi-lime-packages/build-firmware.yml`** | Unified PR/dispatch/schedule orchestrator since May 2026 |
+| Workflow location | **`libremesh/lime-packages/build-firmware.yml`** | Unified PR/dispatch/schedule orchestrator since May 2026 |
 | Self-hosted virtual mesh | **Not used** | Hosted runners are sufficient for 3 nodes; lab self-hosted is reserved for physical-DUT jobs |
 
 ---
@@ -219,7 +219,7 @@ If `VIRTUAL_MESH_NODES > VIRTUAL_MESH_MAX_NODES`: fail at startup with a message
 
 ## 7. CI workflows
 
-The active orchestrator since May 2026 is **`pi-lime-packages/.github/workflows/build-firmware.yml`**. The legacy `daily.yml`, `pull_requests.yml`, and the standalone `virtual-mesh.yml` workflows that lived in `libremesh-tests` were retired when the CI was unified — see [`lime-packages-test-flow.md`](lime-packages-test-flow.md) for the full table of triggers.
+The active orchestrator since May 2026 is **`libremesh/lime-packages/.github/workflows/build-firmware.yml`**. The legacy `daily.yml`, `pull_requests.yml`, and the standalone `virtual-mesh.yml` workflows that lived in `libremesh-tests` were retired when the CI was unified — see [`lime-packages-test-flow.md`](lime-packages-test-flow.md) for the full table of triggers.
 
 The two QEMU/vwifi jobs there are:
 
@@ -230,6 +230,6 @@ The two QEMU/vwifi jobs there are:
 
 Both jobs build a x86_64 LibreMesh image (`qemu_x86_64` target with `extra_feeds: vwifi`) once, then exercise it on a GitHub-hosted Linux runner using `qemu-system-x86_64` in TCG mode (no `/dev/kvm` exposed on hosted runners). The `vwifi-server` host binary is built from `Raizo62/vwifi@4a9842e6` and cached under `~/.vwifi-server-bin/` between runs.
 
-`pi-lime-packages/docs/ci/firmware-build.md` documents the build-side wiring (extra_feeds, extra_packages, x86-combined image format, vwifi-server cache).
+The `lime-packages` repo README documents the build-side wiring (extra_feeds, extra_packages, x86-combined image format, vwifi-server cache).
 
 ---

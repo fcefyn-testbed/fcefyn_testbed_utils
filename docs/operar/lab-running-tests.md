@@ -65,7 +65,7 @@ The image is uploaded via SCP to `/var/cache/labgrid/<user>/<sha256>/` on the la
 
 **Requirements:** the developer's GitHub username must be in `labnet.yaml` `access:` list (Ansible fetches SSH keys from GitHub - see [openwrt-tests onboarding](../diseno/openwrt-tests-onboarding.md#52-register-github-username)), and the lab host must be reachable via `LG_PROXY`.
 
-The test suite locates `labnet.yaml` via `LABNET_PATH`, `OPENWRT_TESTS_DIR/labnet.yaml`, or `../openwrt-tests/labnet.yaml` (sibling of `libremesh-tests`). See [libremesh-tests CONTRIBUTING_LAB](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/docs/CONTRIBUTING_LAB.md).
+The test suite locates `labnet.yaml` via `LABNET_PATH`, `OPENWRT_TESTS_DIR/labnet.yaml`, or `../openwrt-tests/labnet.yaml` (sibling of `libremesh-tests`). See [libremesh-tests CONTRIBUTING_LAB](https://github.com/libremesh/libremesh-tests/blob/main/docs/CONTRIBUTING_LAB.md).
 
 ---
 

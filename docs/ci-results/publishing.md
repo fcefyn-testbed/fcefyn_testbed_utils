@@ -1,6 +1,6 @@
 # Publishing Test Results
 
-Test reports are pulled into this repository from `fcefyn-testbed/lime-packages` CI runs on a schedule, then served alongside the dashboard. Once published, the dashboard renders individual test-case details instead of "Test details not yet published".
+Test reports are pulled into this repository from `libremesh/lime-packages` CI runs on a schedule, then served alongside the dashboard. Once published, the dashboard renders individual test-case details instead of "Test details not yet published".
 
 ## How it works
 
@@ -27,7 +27,7 @@ sequenceDiagram
 
 ### Why this direction
 
-The original plan was for `lime-packages` to push its results into this repo after every CI run, but that requires a workflow change to land in `lime-packages` master — which the upstream LibreMesh project has not accepted. Inverting the direction (this repo pulls from there) means the integration ships on our side without any upstream coupling.
+The CI workflow now lives in upstream `libremesh/lime-packages` (merged via PR #1259). This repo pulls results from there rather than having `lime-packages` push them, keeping the integration decoupled from the upstream workflow.
 
 ## Artifact → results path mapping
 
@@ -73,7 +73,7 @@ docs/ci-results/results/
 
 | Secret | Stored in | Purpose | Permissions |
 |--|--|--|--|
-| `LIME_PACKAGES_TOKEN` | `fcefyn_testbed_utils` | Read CI runs and download artifacts from `lime-packages` | Fine-grained PAT scoped to `fcefyn-testbed/lime-packages` with **Actions: Read** |
+| `LIME_PACKAGES_TOKEN` | `fcefyn_testbed_utils` | Read CI runs and download artifacts from `lime-packages` | Fine-grained PAT scoped to `libremesh/lime-packages` with **Actions: Read** |
 | `BOT_PR_TOKEN` | `fcefyn_testbed_utils` | Open the auto-merged PR with the collected results | Fine-grained PAT scoped to `fcefyn-testbed/fcefyn_testbed_utils` with **Contents: Read and write** + **Pull requests: Read and write** |
 
 ## Repository settings required

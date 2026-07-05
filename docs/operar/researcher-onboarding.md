@@ -9,11 +9,9 @@ For purely external developers (no lab access, just running tests remotely), see
 ## 1. GitHub access
 
 1. Ask the new researcher for their GitHub username and the **public** part of an SSH key they will use for git over SSH.
-2. Add them to the `fcefyn-testbed` GitHub organisation as a member.
-3. Add them to the appropriate team:
-    - **`lab-reviewers`** — can approve runs on the physical lab (`physical-lab` environment) in `fcefyn-testbed/lime-packages`.
-    - **`maintainers`** — can merge PRs to `master`. Reserved for sustained contributors.
-4. If they will work on `libremesh-tests`, add them there too.
+2. Add them to the `fcefyn-testbed` GitHub organisation as a member (for lab infra repos).
+3. If they need to approve physical test runs, add them as a reviewer in the `physical-lab` environment: `libremesh/lime-packages` > Settings > Environments > `physical-lab` > Required reviewers.
+4. If they will work on `libremesh-tests`, grant them access in the `libremesh` org.
 
 ## 2. SSH keys on the lab host
 
@@ -58,7 +56,7 @@ Walk them through a minimal verification that everything works end-to-end:
    uv run labgrid-client places
    ```
 
-3. Trigger one CI run from their GitHub account: open a PR to `fcefyn-testbed/lime-packages`, watch the build + test jobs flow, approve the `physical-lab` environment when prompted (if they are in `lab-reviewers`).
+3. Trigger one CI run from their GitHub account: open a PR to `libremesh/lime-packages`, watch the build + test jobs flow, approve the `physical-lab` environment when prompted (if they are a reviewer).
 4. Open the [CI dashboard](https://fcefyn-testbed.github.io/fcefyn_testbed_utils/ci-results/dashboard.html) and check their run appears.
 
 ## 6. Documentation pointers

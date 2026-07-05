@@ -1,6 +1,6 @@
 # lime-packages CI: hardware test stage
 
-How **fcefyn-testbed/lime-packages** consumes the firmware artifacts
+How **libremesh/lime-packages** consumes the firmware artifacts
 produced by `build-image` and exercises them on the self-hosted lab
 runner (`testbed-fcefyn`) and on QEMU. Single source of truth:
 [build-firmware.yml][wf].
@@ -8,7 +8,7 @@ runner (`testbed-fcefyn`) and on QEMU. Single source of truth:
 Build pipeline overview:
 [lime-packages CI: firmware build](lime-packages-ci-flow.md).
 
-[wf]: https://github.com/fcefyn-testbed/lime-packages/blob/master/.github/workflows/build-firmware.yml
+[wf]: https://github.com/libremesh/lime-packages/blob/master/.github/workflows/build-firmware.yml
 
 ---
 
@@ -18,8 +18,8 @@ The test infrastructure is deliberately split across two repositories:
 
 | Repo | What it owns |
 |------|-------------|
-| `fcefyn-testbed/lime-packages` | The CI workflow (`.github/workflows/build-firmware.yml`), the build scripts, and the matrix config. This is the fork of `libremesh/lime-packages`. |
-| `fcefyn-testbed/libremesh-tests` | The pytest test suite (`tests/test_libremesh.py`, `test_mesh.py`, etc.), labgrid environment files (`targets/<device>.yaml`), and the `uv` project that pins test dependencies. |
+| `libremesh/lime-packages` | The CI workflow (`.github/workflows/build-firmware.yml`), the build scripts, and the matrix config. |
+| `libremesh/libremesh-tests` | The pytest test suite (`tests/test_libremesh.py`, `test_mesh.py`, etc.), labgrid environment files (`targets/<device>.yaml`), and the `uv` project that pins test dependencies. |
 
 The workflow checks out `libremesh-tests@main` during each test
 job and calls `uv run pytest` from there. No test code lives inside
@@ -42,50 +42,23 @@ For the CI workflow in `lime-packages` to access `libremesh-tests`,
 the self-hosted runner must be able to check out both repos. Two
 layouts work:
 
-**Option A: same GitHub organisation (current setup)**
-
-Both repos live in `fcefyn-testbed`. The runner is registered at the
-organisation level (`Settings > Actions > Runners`), so it can
-service workflows from any repo in the org.
+Both repos and the CI workflow live in the `libremesh` organisation.
+The self-hosted runner (`fcefyn-runner`) is registered at the org level
+(`Settings > Actions > Runners`) so it services workflows from any
+repo in the org.
 
 ```
-fcefyn-testbed/lime-packages   <- workflow here
-fcefyn-testbed/libremesh-tests <- checked out by the workflow
+libremesh/lime-packages   <- workflow here
+libremesh/libremesh-tests <- checked out by the workflow
 ```
 
-The `actions/checkout` step in the workflow uses
-`repository: fcefyn-testbed/libremesh-tests` - this is a public
-repo, so no `token:` override is needed.
+The `actions/checkout` step uses
+`repository: libremesh/libremesh-tests` - a public repo, so no
+`token:` override is needed.
 
-**Option B: different organisations (future: upstream contribution)**
-
-The upstream `libremesh/lime-packages` workflow can still check out
-`fcefyn-testbed/libremesh-tests` (public repo, no auth needed):
-
-```yaml
-- uses: actions/checkout@v6
-  with:
-    repository: fcefyn-testbed/libremesh-tests
-    ref: main
-    path: libremesh-tests
-```
-
-The runner, however, must be registered in the `libremesh` org (or in
-the specific `libremesh/lime-packages` repo) for the workflow to be
-eligible for self-hosted execution. The lab runner registration is the
-only thing that needs to change when contributing upstream - the
-`libremesh-tests` checkout line stays the same as long as the test
-repo remains public.
-
-**When `libremesh` eventually merges this CI approach,** the expected
-final state is:
-
-- Runner registered in `libremesh` org.
-- Workflow in `libremesh/lime-packages` checks out
-  `libremesh/libremesh-tests` (a fork/equivalent living in the same
-  upstream org).
-- `fcefyn-testbed/lime-packages` goes back to tracking upstream with
-  only testbed-specific device entries in `targets.yml`.
+The runner group's `allows_public_repositories` setting must be
+enabled for the runner to pick up jobs from public repos like
+`lime-packages`.
 
 ### Pinned branch (`main`)
 
@@ -109,9 +82,8 @@ Notes:
 
 - QEMU tests run automatically on every PR without approval.
 - Physical tests (`test-firmware`, `test-mesh`) require approval from
-  a member of the **`lab-reviewers`** team via the `physical-lab`
-  GitHub Actions environment before execution on the self-hosted
-  runner. See [CI governance](#11-ci-governance-teams-and-merge-policy).
+  a `physical-lab` environment reviewer before execution on the
+  self-hosted runner. See [CI governance](#11-ci-governance-and-merge-policy).
 - The workflow concurrency group `physical-lab-shared` makes sure that
   no two lab-bound triggers run at once.
 - The `summary` job is a required status check for merging; it fails
@@ -143,8 +115,8 @@ Each step is implemented in [tools/ci/lab_stage_firmware.sh][stage-fw]
 and [tools/ci/lab_stage_mesh.sh][stage-mesh]; the workflow steps
 themselves are 2-3 lines plus env vars.
 
-[stage-fw]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/lab_stage_firmware.sh
-[stage-mesh]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/lab_stage_mesh.sh
+[stage-fw]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/lab_stage_firmware.sh
+[stage-mesh]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/lab_stage_mesh.sh
 
 ---
 
@@ -173,14 +145,14 @@ flowchart LR
 ```
 
 - Every physical place runs single-node `test-firmware` (after
-  `lab-reviewers` approval).
+  `physical-lab` environment approval).
 - `test-mesh` is forced to `physical_mesh_count=3` on PRs because
   `pull_request` cannot pass workflow inputs and N=3 is the most
   representative shape (3 different SoC families).
 - The `summary` job is a required status check; merge is blocked
   until all jobs succeed.
-- Only members of the **`maintainers`** team can merge the PR
-  (see [CI governance](#11-ci-governance-teams-and-merge-policy)).
+- Merge requires at least one approving review (branch protection
+  on `master`). See [CI governance](#11-ci-governance-and-merge-policy).
 
 ---
 
@@ -213,7 +185,7 @@ runner user `rw` on `/dev/kvm` (default permissions deny non-root
 access). `udevadm trigger --name-match=kvm` is used so the rule applies
 to the existing device node, not just future hot-plugs.
 
-[kvm]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/enable_kvm.sh
+[kvm]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/enable_kvm.sh
 
 ---
 
@@ -309,39 +281,37 @@ For a brand-new device that has not been onboarded yet, follow
 
 ---
 
-## 11. CI governance: teams and merge policy
+## 11. CI governance and merge policy
 
-Access control for `fcefyn-testbed/lime-packages` is split into two
-GitHub Teams with distinct responsibilities:
-
-| Team | Members | Responsibility |
-|------|---------|---------------|
-| `lab-reviewers` | francoriba, ccasanueva7 | Approve physical lab test runs (environment deployment) |
-| `maintainers` | francoriba | Review PRs and merge to `master` |
+Access control for `libremesh/lime-packages` uses GitHub's built-in
+environment and branch protection - no custom teams are required.
 
 ### Environment protection (`physical-lab`)
 
-The `physical-lab` environment has a **required reviewer** rule set to
-the `lab-reviewers` team. When a PR or `workflow_dispatch` triggers a
-job that uses `environment: physical-lab`, GitHub Actions pauses the
-job until a team member clicks **Approve and deploy** in the Actions
-UI. `can_admins_bypass` is disabled so the gate is uniform for everyone.
+The `physical-lab` environment has individual **required reviewers**:
+
+| Reviewer | Role |
+|----------|------|
+| francoriba | Lab maintainer, environment reviewer |
+| ilario | LibreMesh maintainer, environment reviewer |
+| javierbrk | LibreMesh maintainer, environment reviewer |
+
+When a PR or `workflow_dispatch` triggers a job that uses
+`environment: physical-lab`, GitHub Actions pauses the job until one
+of the reviewers clicks **Approve and deploy** in the Actions UI.
 
 The `schedule` trigger skips the gate (empty environment name) so the
 daily cron runs unattended.
 
-### Branch ruleset (`bloqueo marge`)
+### Branch protection (`master`)
 
-A repository ruleset on `master` enforces:
+Branch protection on `master` enforces:
 
 | Rule | Effect |
 |------|--------|
 | `required_status_checks` (`summary`) | PR cannot merge until `summary` passes |
-| `pull_request` (1 approval, dismiss stale) | PR needs at least one approving review |
-| `deletion` + `non_fast_forward` | Prevent branch deletion and force-pushes |
-
-**Bypass actors:** only the `maintainers` team. They can push directly
-to `master` for CI infrastructure fixes.
+| `required_pull_request_reviews` (1 approval) | PR needs at least one approving review |
+| `enforce_admins` | Admins also follow the rules |
 
 ### Summary job as CI gate
 
@@ -355,7 +325,7 @@ Since `summary` is the required status check, and it waits for all
 jobs (including `test-firmware` which is pending environment approval),
 the PR stays unmergeable until every test completes successfully.
 
-[summary-sh]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/build_summary.sh
+[summary-sh]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/build_summary.sh
 
 ### Complete PR lifecycle
 
@@ -363,23 +333,22 @@ the PR stays unmergeable until every test completes successfully.
 sequenceDiagram
     participant C as Contributor
     participant GH as GitHub
-    participant LR as lab-reviewer
-    participant M as maintainer
+    participant R as Reviewer
 
     C->>GH: Open PR
     GH->>GH: Builds + QEMU tests (automatic)
-    GH-->>LR: Request environment approval
-    LR->>GH: Approve and deploy
+    GH-->>R: Request environment approval
+    R->>GH: Approve and deploy
     GH->>GH: Physical tests run on self-hosted runner
     GH->>GH: summary job evaluates all results
-    M->>GH: Code review (approve PR)
-    M->>GH: Merge
+    R->>GH: Code review (approve PR)
+    R->>GH: Merge
 ```
 
-### Portability to upstream
+### Portability
 
 The workflow only references `environment: physical-lab` by name. All
-governance (teams, rulesets, environment reviewers) lives in GitHub
+governance (environment reviewers, branch protection) lives in GitHub
 repository/org settings, not in the YAML. Any organisation adopting
-this workflow creates its own `physical-lab` environment and teams
-without modifying the workflow file.
+this workflow creates its own `physical-lab` environment and adds
+reviewers without modifying the workflow file.

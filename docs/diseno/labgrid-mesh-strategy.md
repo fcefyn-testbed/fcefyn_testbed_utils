@@ -1,6 +1,6 @@
 # Labgrid mesh strategy and orchestration
 
-Design-level description of how [libremesh-tests](https://github.com/fcefyn-testbed/libremesh-tests) (branch `main`) extends the vanilla [openwrt-tests](https://github.com/aparcar/openwrt-tests) Labgrid boot path for **multi-node mesh** tests: state machines for the custom strategies, contrast with upstream `UBootTFTPStrategy`, and the **pytest plus Labgrid** session flow (VLAN switch, parallel subprocess booters, teardown). Intended for maintainers and for thesis or project report background, not for day-to-day testbed operators.
+Design-level description of how [libremesh-tests](https://github.com/libremesh/libremesh-tests) (branch `main`) extends the vanilla [openwrt-tests](https://github.com/aparcar/openwrt-tests) Labgrid boot path for **multi-node mesh** tests: state machines for the custom strategies, contrast with upstream `UBootTFTPStrategy`, and the **pytest plus Labgrid** session flow (VLAN switch, parallel subprocess booters, teardown). Intended for maintainers and for thesis or project report background, not for day-to-day testbed operators.
 
 Suite-specific code stays in **libremesh-tests**; this page links to paths there and to upstream blobs on GitHub.
 
@@ -51,7 +51,7 @@ stateDiagram-v2
 
 ## 3. libremesh-tests `UBootTFTPStrategy` (main)
 
-Source: [`strategies/tftpstrategy.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/strategies/tftpstrategy.py).
+Source: [`strategies/tftpstrategy.py`](https://github.com/libremesh/libremesh-tests/blob/main/strategies/tftpstrategy.py).
 
 Same **external** states (`unknown`, `off`, `uboot`, `shell`). Differences:
 
@@ -100,7 +100,7 @@ The outer `Status` enum still has `uboot` and `shell`; the flowchart shows the s
 | `shell` transition | `uboot.boot` after implicit uboot | Explicit `run_download_commands` then `boot_kernel` then `activate_shell` |
 | Multi-node race (STP, link) | Not addressed | Retries, download retry loop, docstring rationale |
 
-Image path for staging remains `get_image_path("root")` in [`tftpstrategy.py` line 288](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/strategies/tftpstrategy.py). Single-node pytest still injects `images["firmware"]` via `setup_env` in [`tests/conftest.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest.py) when Labgrid `env` exists; mesh subprocesses set `LG_IMAGE` and resolve the target per place.
+Image path for staging remains `get_image_path("root")` in [`tftpstrategy.py` line 288](https://github.com/libremesh/libremesh-tests/blob/main/strategies/tftpstrategy.py). Single-node pytest still injects `images["firmware"]` via `setup_env` in [`tests/conftest.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest.py) when Labgrid `env` exists; mesh subprocesses set `LG_IMAGE` and resolve the target per place.
 
 ---
 
@@ -108,7 +108,7 @@ Image path for staging remains `get_image_path("root")` in [`tftpstrategy.py` li
 
 **Upstream** [`strategies/qemunetworkstrategy.py`](https://github.com/aparcar/openwrt-tests/blob/main/strategies/qemunetworkstrategy.py): states `unknown`, `off`, `shell`. On `shell`, `qemu.on()`, `activate(shell)`, `update_network_service()` rewrites SLIRP forward to **`192.168.1.1`** (stock OpenWrt LAN).
 
-**LibreMesh** [`strategies/qemunetworkstrategy_libremesh.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/strategies/qemunetworkstrategy_libremesh.py): same three states; `update_network_service()` waits for **dropbear on :22** (LibreMesh first-boot delay), then points SSH at **`10.13.0.1`** (anygw on `br-lan`) instead of `192.168.1.1`.
+**LibreMesh** [`strategies/qemunetworkstrategy_libremesh.py`](https://github.com/libremesh/libremesh-tests/blob/main/strategies/qemunetworkstrategy_libremesh.py): same three states; `update_network_service()` waits for **dropbear on :22** (LibreMesh first-boot delay), then points SSH at **`10.13.0.1`** (anygw on `br-lan`) instead of `192.168.1.1`.
 
 ```mermaid
 stateDiagram-v2
@@ -164,7 +164,7 @@ sequenceDiagram
     Pytest->>VLAN: restore VLANs
 ```
 
-[`tests/conftest_mesh.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest_mesh.py) defines `mesh_nodes` (session) depending on `mesh_vlan_multi`. [`tests/mesh_boot_node.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/mesh_boot_node.py) runs `boot_node()`: `Environment`, `start_session`, `acquire`, `strategy.transition_to_uboot_with_retry`, `run_download_commands`, `boot_kernel`, `activate_shell`, then post-shell steps. Outer boot retries use `LG_MESH_BOOT_ATTEMPTS` / `LG_MESH_BOOT_RETRY_COOLDOWN`.
+[`tests/conftest_mesh.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest_mesh.py) defines `mesh_nodes` (session) depending on `mesh_vlan_multi`. [`tests/mesh_boot_node.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/mesh_boot_node.py) runs `boot_node()`: `Environment`, `start_session`, `acquire`, `strategy.transition_to_uboot_with_retry`, `run_download_commands`, `boot_kernel`, `activate_shell`, then post-shell steps. Outer boot retries use `LG_MESH_BOOT_ATTEMPTS` / `LG_MESH_BOOT_RETRY_COOLDOWN`.
 
 ---
 
@@ -195,7 +195,7 @@ flowchart TD
     sshCmd --> singleTests
 ```
 
-When `LG_MESH_PLACES` is set, `mesh_vlan_single` returns early so it does not double-switch VLANs for mesh runs ([`tests/conftest_vlan.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest_vlan.py)).
+When `LG_MESH_PLACES` is set, `mesh_vlan_single` returns early so it does not double-switch VLANs for mesh runs ([`tests/conftest_vlan.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest_vlan.py)).
 
 ---
 
@@ -203,20 +203,20 @@ When `LG_MESH_PLACES` is set, `mesh_vlan_single` returns early so it does not do
 
 | Variable | Role | Primary source file |
 |----------|------|---------------------|
-| `LG_MESH_UBOOT_RETRIES` | U-Boot activation retries inside strategy (capped vs login timeout budget) | [`strategies/tftpstrategy.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/strategies/tftpstrategy.py) |
+| `LG_MESH_UBOOT_RETRIES` | U-Boot activation retries inside strategy (capped vs login timeout budget) | [`strategies/tftpstrategy.py`](https://github.com/libremesh/libremesh-tests/blob/main/strategies/tftpstrategy.py) |
 | `LG_MESH_UBOOT_RETRY_COOLDOWN` | Seconds between U-Boot activation retries | same |
 | `LG_MESH_UBOOT_INTERRUPT_SPAM_SEC` | Duration of interrupt spam; `0` disables | same |
 | `LG_MESH_UBOOT_INTERRUPT_SPAM_INTERVAL` | Sleep between spam writes | same |
 | `TFTP_SERVER_IP` | Override TFTP server for U-Boot `serverip` | same; set by VLAN fixtures / mesh_nodes |
-| `LG_MESH_TFTP_IP` | Default mesh TFTP dnsmasq IP (`192.168.200.1` if unset) | [`tests/conftest_mesh.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest_mesh.py) |
-| `LG_MESH_BOOT_ATTEMPTS` | Full boot pipeline retries in subprocess | [`tests/mesh_boot_node.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/mesh_boot_node.py) |
+| `LG_MESH_TFTP_IP` | Default mesh TFTP dnsmasq IP (`192.168.200.1` if unset) | [`tests/conftest_mesh.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest_mesh.py) |
+| `LG_MESH_BOOT_ATTEMPTS` | Full boot pipeline retries in subprocess | [`tests/mesh_boot_node.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/mesh_boot_node.py) |
 | `LG_MESH_BOOT_RETRY_COOLDOWN` / `LG_MESH_UBOOT_RETRY_COOLDOWN` | Cooldown between full boot attempts | `mesh_boot_node.py` |
 | `LG_MESH_KEEP_POWERED` | Skip `transition(off)` on teardown for debugging | `mesh_boot_node.py` |
 | `LG_MESH_PLACES` | Comma-separated places for physical mesh | `conftest_mesh.py` |
 | `LG_IMAGE` / `LG_IMAGE_MAP` | Firmware path per place | `conftest_mesh.py` |
 | `LG_VIRTUAL_MESH` | Use QEMU virtual mesh path | `conftest_mesh.py` |
 | `VIRTUAL_MESH_IMAGE`, `VIRTUAL_MESH_NODES`, `VIRTUAL_MESH_SKIP_VWIFI`, `VIRTUAL_MESH_VWIFI_HOST`, `VIRTUAL_MESH_CONVERGENCE_WAIT` | Virtual mesh tuning | `conftest_mesh.py` |
-| `VLAN_SWITCH_DISABLED` | Skip `switch-vlan` | [`tests/conftest_vlan.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest_vlan.py) |
+| `VLAN_SWITCH_DISABLED` | Skip `switch-vlan` | [`tests/conftest_vlan.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest_vlan.py) |
 | `PLACE_PREFIX` | Strip labgrid place prefix for DUT name passed to `switch-vlan` | `conftest_vlan.py` |
 | `LG_PROXY` | Remote `switch-vlan` over SSH to lab host | `conftest_vlan.py` |
 
@@ -228,7 +228,7 @@ When `LG_MESH_PLACES` is set, `mesh_vlan_single` returns early so it does not do
    Each DUT needs its own Labgrid **session**, **place lock**, and **serial console** state. Driving multiple targets from one pytest process would serialize console access and complicate coordinator locking. Subprocesses isolate failures, allow **parallel** power cycles and U-Boot windows, and match how developers already run `labgrid-client` per place.
 
 2. **U-Boot interrupt spam**  
-   Remote paths (WireGuard, SSH jump, coordinator proxy) add jitter. The stock Labgrid expect on the autoboot string can miss the narrow window. Continuous interrupt bytes during a bounded window after `power.cycle()` makes stopping autoboot reliable; see comments in [`tftpstrategy.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/strategies/tftpstrategy.py) (`_spam_uboot_interrupt`).
+   Remote paths (WireGuard, SSH jump, coordinator proxy) add jitter. The stock Labgrid expect on the autoboot string can miss the narrow window. Continuous interrupt bytes during a bounded window after `power.cycle()` makes stopping autoboot reliable; see comments in [`tftpstrategy.py`](https://github.com/libremesh/libremesh-tests/blob/main/strategies/tftpstrategy.py) (`_spam_uboot_interrupt`).
 
 3. **`TFTP_SERVER_IP` override**  
    Hybrid labs put each DUT on an **isolated access VLAN** for single-node tests; mesh tests move ports to **VLAN 200** where dnsmasq/TFTP listens on a **different** address than `RemoteTFTPProvider.external_ip` from the exporter's isolated-VLAN context. Overriding aligns U-Boot `serverip` with the mesh segment.
@@ -240,7 +240,7 @@ When `LG_MESH_PLACES` is set, `mesh_vlan_single` returns early so it does not do
    LibreMesh uses **anygw** `10.13.0.1` and dynamic `10.13.x.x` on `br-lan`, not `192.168.1.1`. SLIRP port forward must target anygw; waiting for dropbear covers first-boot `lime-config` delay.
 
 6. **`setup_env` without `env` fixture**  
-   Documented in [`tests/conftest.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest.py): mesh runs often omit `--lg-env`, so pytest must not require Labgrid's `env` fixture for session autouse setup.
+   Documented in [`tests/conftest.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest.py): mesh runs often omit `--lg-env`, so pytest must not require Labgrid's `env` fixture for session autouse setup.
 
 ---
 
@@ -248,13 +248,13 @@ When `LG_MESH_PLACES` is set, `mesh_vlan_single` returns early so it does not do
 
 **libremesh-tests (main)**
 
-- [`strategies/tftpstrategy.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/strategies/tftpstrategy.py) - `UBootTFTPStrategy`
-- [`strategies/qemunetworkstrategy_libremesh.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/strategies/qemunetworkstrategy_libremesh.py) - QEMU LibreMesh
-- [`tests/conftest.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest.py) - plugins, `setup_env`, `shell_command`, `ssh_command`
-- [`tests/conftest_mesh.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest_mesh.py) - `mesh_nodes`, virtual mesh, image map
-- [`tests/conftest_vlan.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/conftest_vlan.py) - `mesh_vlan_single`, `mesh_vlan_multi`
-- [`tests/mesh_boot_node.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/mesh_boot_node.py) - subprocess boot pipeline
-- [`tests/test_mesh.py`](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/tests/test_mesh.py) - mesh test cases
+- [`strategies/tftpstrategy.py`](https://github.com/libremesh/libremesh-tests/blob/main/strategies/tftpstrategy.py) - `UBootTFTPStrategy`
+- [`strategies/qemunetworkstrategy_libremesh.py`](https://github.com/libremesh/libremesh-tests/blob/main/strategies/qemunetworkstrategy_libremesh.py) - QEMU LibreMesh
+- [`tests/conftest.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest.py) - plugins, `setup_env`, `shell_command`, `ssh_command`
+- [`tests/conftest_mesh.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest_mesh.py) - `mesh_nodes`, virtual mesh, image map
+- [`tests/conftest_vlan.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/conftest_vlan.py) - `mesh_vlan_single`, `mesh_vlan_multi`
+- [`tests/mesh_boot_node.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/mesh_boot_node.py) - subprocess boot pipeline
+- [`tests/test_mesh.py`](https://github.com/libremesh/libremesh-tests/blob/main/tests/test_mesh.py) - mesh test cases
 
 **openwrt-tests (main)**
 

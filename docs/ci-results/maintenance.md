@@ -15,7 +15,7 @@ The pull pipeline uses two fine-grained PATs stored as repository secrets in `fc
 Used to list runs and download artifacts from `lime-packages`. A 401/403 on the "Download lime-packages report.xml artifacts" step means this token expired.
 
 1. Generate a new fine-grained PAT at `github.com/settings/personal-access-tokens/new`:
-    - Resource owner: `fcefyn-testbed`
+    - Resource owner: `libremesh`
     - Repository access: only `lime-packages`
     - Permissions: **Actions: Read-only** (Metadata: Read is added automatically)
 2. `Settings → Secrets and variables → Actions` on `fcefyn_testbed_utils`

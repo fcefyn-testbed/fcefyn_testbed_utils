@@ -42,7 +42,7 @@ Top-level keys in `exporter.yaml` (use as `-p` argument):
 
 ## Lock and unlock a place
 
-Same verbs as [libremesh-tests workflows](https://github.com/fcefyn-testbed/libremesh-tests/tree/main/.github/workflows) (`lock` after reserve token, `unlock` in `always`).
+Same verbs as [libremesh-tests workflows](https://github.com/libremesh/libremesh-tests/tree/main/.github/workflows) (`lock` after reserve token, `unlock` in `always`).
 
 ```bash
 labgrid-client -p labgrid-fcefyn-bananapi_bpi-r4 lock

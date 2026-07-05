@@ -11,7 +11,7 @@ Companion pages:
 - [CI: hardware test stage](lime-packages-test-flow.md)
 - [DUT onboarding](../operar/dut-onboarding.md)
 
-[wf]: https://github.com/fcefyn-testbed/lime-packages/blob/master/.github/workflows/build-firmware.yml
+[wf]: https://github.com/libremesh/lime-packages/blob/master/.github/workflows/build-firmware.yml
 
 ---
 
@@ -33,14 +33,14 @@ Before adding a device to the matrix:
    power control. Follow [DUT onboarding][dut].
 4. **A `targets/<device>.yaml` in libremesh-tests**: the labgrid
    environment file consumed by `pytest --lg-env`. This file lives in
-   `fcefyn-testbed/libremesh-tests` (the test repo, separate from the
+   `libremesh/libremesh-tests` (the test repo, separate from the
    `lime-packages` workflow repo). See the
    [libremesh-tests README][lr-readme] and the
    [two-repo model](lime-packages-test-flow.md#0-two-repo-model-workflow-vs-tests).
 
 [toh]: https://openwrt.org/toh/start
 [dut]: ../operar/dut-onboarding.md
-[lr-readme]: https://github.com/fcefyn-testbed/libremesh-tests/blob/main/README.md
+[lr-readme]: https://github.com/libremesh/libremesh-tests/blob/main/README.md
 
 ---
 
@@ -155,12 +155,12 @@ For most boards, copy an existing similar entry and adjust. Examples:
 ## 4. Add the labgrid environment
 
 The CI workflow (`lime-packages`) checks out
-`fcefyn-testbed/libremesh-tests@main` during each test job
+`libremesh/libremesh-tests@main` during each test job
 (see [two-repo model][two-repo]). That repo owns all test definitions;
 `lime-packages` owns the workflow and the matrix. If you want CI to
 actually boot the new board:
 
-1. Open a PR to `fcefyn-testbed/libremesh-tests` that adds
+1. Open a PR to `libremesh/libremesh-tests` that adds
    `targets/<device>.yaml` with the labgrid driver chain for the new
    place (see the [libremesh-tests README][lr-readme]).
 2. Make sure the place name registered in the coordinator matches
@@ -219,7 +219,7 @@ gh workflow run build-firmware.yml \
 | Missing FIT artifact for ath79 | Use `image_format: multi-uimage`; FIT requires DTB to be a separate file. Background: [ImageBuilder limits][ib-limits]. |
 | QEMU mesh tests fail to start `vwifi` | The `qemu_x86_64` package list must include `kmod-mac80211-hwsim`, `wpad-mesh-mbedtls` and `vwifi`. Background: [QEMU vwifi notes][qemu-doc]. |
 
-[lmpatch]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/patch_dtb_local_mac.py
+[lmpatch]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/patch_dtb_local_mac.py
 [belkin]: lime-packages/belkin-rt3200-dtb.md
 [ib-limits]: lime-packages/imagebuilder-limits.md
 [qemu-doc]: lime-packages/qemu-vwifi.md

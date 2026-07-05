@@ -72,7 +72,7 @@ Nothing else is required on the lab side. Upstream CI will start scheduling jobs
 
 ## 3. Scenario B: libremesh-capable lab
 
-Goal: run the [libremesh-tests](https://github.com/fcefyn-testbed/libremesh-tests) suite (single-node LibreMesh, multi-node mesh, virtual mesh) against DUTs in the lab. Requires a managed switch that can move DUT ports between isolated VLANs and the mesh VLAN (200 by default).
+Goal: run the [libremesh-tests](https://github.com/libremesh/libremesh-tests) suite (single-node LibreMesh, multi-node mesh, virtual mesh) against DUTs in the lab. Requires a managed switch that can move DUT ports between isolated VLANs and the mesh VLAN (200 by default).
 
 **Audience:** labs that want their DUTs covered by LibreMesh test matrices.
 
@@ -85,9 +85,9 @@ Goal: run the [libremesh-tests](https://github.com/fcefyn-testbed/libremesh-test
    - Credentials in `/etc/switch.conf` (system-wide, group-readable so any SSH user can run `switch-vlan`; see [switch-config.md#multi-user-setup](../configuracion/switch-config.md#multi-user-setup-recommended-for-labs-with-remote-devs)).
    - DUT-to-port map in `/etc/testbed/dut-config.yaml` (or set `SWITCH_DUT_CONFIG`). DUT names in that file must match the suffix of labgrid place names (see place-to-DUT mapping below).
    - Confirm `switch-vlan --help` works as the SSH user.
-3. Register a **self-hosted GitHub Actions runner** on the lab host (or on another machine with lab access) and label it for the lime-packages CI workflow. The runner should expose the labels `[self-hosted, testbed-fcefyn]` (or your lab equivalent) — these match the `runs-on:` of `pi-lime-packages/.github/workflows/build-firmware.yml`. See [CI runner config](../configuracion/ci-runner.md) for details.
-4. The active CI orchestrator is `pi-lime-packages/.github/workflows/build-firmware.yml`. Each lab declares its hardware in `pi-lime-packages/.github/ci/targets.yml` (per-target `test_places:` / `test_firmware:` / `image_format:` keys). The legacy `libremesh-tests` daily/pull_requests workflows were retired in May 2026; only the lint workflow `formal.yml` remains in that repo.
-5. Local development against the lab: `LG_PROXY=labgrid-<lab>`, `LG_MESH_PLACES=labgrid-<lab>-<dut1>,labgrid-<lab>-<dut2>`, `PLACE_PREFIX=labgrid-<lab>-` (or leave empty for the second-hyphen fallback). See [libremesh-tests CONTRIBUTING_LAB.md](https://github.com/fcefyn-testbed/libremesh-tests/blob/main/docs/CONTRIBUTING_LAB.md).
+3. Register a **self-hosted GitHub Actions runner** on the lab host (or on another machine with lab access) and label it for the lime-packages CI workflow. The runner should expose the labels `[self-hosted, testbed-fcefyn]` (or your lab equivalent) — these match the `runs-on:` of `libremesh/lime-packages/.github/workflows/build-firmware.yml`. See [CI runner config](../configuracion/ci-runner.md) for details.
+4. The active CI orchestrator is [`build-firmware.yml`](https://github.com/libremesh/lime-packages/blob/master/.github/workflows/build-firmware.yml). Each lab declares its hardware in [`targets.yml`](https://github.com/libremesh/lime-packages/blob/master/.github/ci/targets.yml) (per-target `test_places:` / `test_firmware:` / `image_format:` keys). The legacy `libremesh-tests` daily/pull_requests workflows were retired in May 2026; only the lint workflow `formal.yml` remains in that repo.
+5. Local development against the lab: `LG_PROXY=labgrid-<lab>`, `LG_MESH_PLACES=labgrid-<lab>-<dut1>,labgrid-<lab>-<dut2>`, `PLACE_PREFIX=labgrid-<lab>-` (or leave empty for the second-hyphen fallback). See [libremesh-tests CONTRIBUTING_LAB.md](https://github.com/libremesh/libremesh-tests/blob/main/docs/CONTRIBUTING_LAB.md).
 
 ### Place-to-DUT mapping
 

@@ -70,21 +70,27 @@ To move the runner from one repo to another (or user to org):
 
 ---
 
-## 6. Ownership transfer (if needed in near future)
+## 6. Organisation registration
 
-When the repo transfers to an org, attached runners move with it. The systemd service name may still reference the old owner; this should not affect operation.
+The runner (`fcefyn-runner`) is registered in the **`libremesh`**
+GitHub organisation (`Settings > Actions > Runners`). It services
+workflows from any repo in the org, including `libremesh/lime-packages`.
+
+The runner group's `allows_public_repositories` must be `true` for it
+to pick up jobs from public repos.
+
+The systemd service is named `actions.runner.libremesh.fcefyn-runner.service`.
 
 ---
 
 ## 7. Workflows that use this runner
 
-The following workflows in `fcefyn-testbed/fcefyn_testbed_utils` target this runner with `runs-on: [self-hosted, testbed-fcefyn]`:
+The following workflows target this runner with `runs-on: [self-hosted, testbed-fcefyn]`:
 
-| Workflow | Trigger | What it does on the runner |
-|----------|---------|---------------------------|
-| `build-and-test-libremesh.yml` | Manual (`workflow_dispatch`) | Downloads firmware artifact built on GitHub-hosted runners, reserves the DUT via labgrid, loads firmware, and runs libremesh-tests with pytest. |
-
-The `build` job of that workflow runs on GitHub-hosted runners (no lab hardware needed). Only the `flash_and_test` job lands on this runner.
+| Workflow | Repository | Trigger | What it does on the runner |
+|----------|-----------|---------|---------------------------|
+| `build-firmware.yml` | `libremesh/lime-packages` | PR, `workflow_dispatch`, schedule | Physical tests (`test-firmware`, `test-mesh`) after environment approval |
+| `build-and-test-libremesh.yml` | `fcefyn-testbed/fcefyn_testbed_utils` | Manual (`workflow_dispatch`) | Downloads firmware, reserves DUT via labgrid, loads firmware, runs libremesh-tests |
 
 See [CI: Build & Test](../operar/ci-build-and-test.md) for full usage instructions.
 

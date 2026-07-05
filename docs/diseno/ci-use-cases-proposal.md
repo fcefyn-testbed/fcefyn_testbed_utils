@@ -11,7 +11,7 @@ The testbed supports two CI contexts:
 | Context | Upstream repo | Runner | Hardware |
 |---------|--------------|--------|----------|
 | **OpenWrt vanilla** | `aparcar/openwrt-tests` | GitHub-hosted (ubuntu-latest) | Physical DUTs (isolated VLANs) |
-| **LibreMesh** | `libremesh/libremesh-tests` (fork) | FCEFyN self-hosted + GitHub-hosted | Physical DUTs (VLAN 200) + QEMU VMs |
+| **LibreMesh** | `libremesh/libremesh-tests` | FCEFyN self-hosted + GitHub-hosted | Physical DUTs (VLAN 200) + QEMU VMs |
 
 Both contexts can coexist on the same physical hardware using the hybrid lab architecture described in [hybrid-lab-proposal](hybrid-lab-proposal.md).
 

@@ -241,7 +241,7 @@ sequenceDiagram
 
 ## 8. Differences from libremesh-tests
 
-| Aspect | openwrt-tests (upstream) | libremesh-tests (fork) |
+| Aspect | openwrt-tests (upstream) | libremesh-tests |
 |--------|--------------------------|------------------------|
 | Coordinator | Per-lab (loopback on each lab host) | Same per-lab coordinator |
 | CI runner | aparcar runners (datacenter VM) | Self-hosted runner per lab (e.g. `testbed-fcefyn`) |

@@ -57,7 +57,7 @@ Artifacts: `bin/targets/<target>/<subtarget>/`.
 
 ## 2. LibreMesh (lime-packages)
 
-Use for **community mesh** images: add the LibreMesh feeds and select `lime-*` packages (as required by the test suite or [libremesh-tests](https://github.com/fcefyn-testbed/libremesh-tests)).
+Use for **community mesh** images: add the LibreMesh feeds and select `lime-*` packages (as required by the test suite or [libremesh-tests](https://github.com/libremesh/libremesh-tests)).
 
 **1. Clone OpenWrt and enter build root**
 
@@ -210,9 +210,9 @@ To use a pre-built initramfs in tests, set `LG_IMAGE` to the file path. See [Run
 
 ---
 
-## Automatic builds via PR (lime-packages fork)
+## Automatic builds via PR (lime-packages)
 
-The **fcefyn-testbed/lime-packages** fork includes `.github/workflows/build-firmware.yml`: on pull requests (and manual dispatch), GitHub Actions builds a **local lime_packages feed** with the OpenWrt SDK, then one **firmware image per row** in `.github/ci/targets.yml` using ImageBuilder. Successful runs upload **`firmware-<device>.*`** and **`lime-feed-<arch>`** artifacts.
+**libremesh/lime-packages** includes `.github/workflows/build-firmware.yml`: on pull requests (and manual dispatch), GitHub Actions builds a **local lime_packages feed** with the OpenWrt SDK, then one **firmware image per row** in `.github/ci/targets.yml` using ImageBuilder. Successful runs upload **`firmware-<device>.*`** and **`lime-feed-<arch>`** artifacts.
 
 For architecture, caching, and feed indexing details, see:
 

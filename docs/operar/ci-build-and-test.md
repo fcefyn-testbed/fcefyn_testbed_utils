@@ -105,7 +105,7 @@ Runs on the physical T430 machine in the FCEFYN lab.
 2. Reserves the target device via [labgrid](https://labgrid.readthedocs.io)
    (waits if the device is busy)
 3. Loads the firmware onto the device
-4. Runs the [libremesh-tests](https://github.com/fcefyn-testbed/libremesh-tests)
+4. Runs the [libremesh-tests](https://github.com/libremesh/libremesh-tests)
    test suite with pytest
 5. Releases the device when done (even if tests fail)
 

@@ -7,7 +7,7 @@ diagnosis and the rationale for the
 `dtb_force_legacy_partitions: true` flag in `.github/ci/targets.yml`
 for the `linksys_e8450` target.
 
-[patcher]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/patch_dtb_partitions.py
+[patcher]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/patch_dtb_partitions.py
 
 ## Symptom
 

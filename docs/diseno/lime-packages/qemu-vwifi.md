@@ -152,7 +152,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_mesh)
 ```
 
-Lives in `fcefyn-testbed/libremesh-tests@main`. Any future opt-in
+Lives in `libremesh/libremesh-tests@main`. Any future opt-in
 mechanism needs the same early-return treatment.
 
 ### KVM on hosted runners
@@ -163,7 +163,7 @@ user `rw` on `/dev/kvm` and runs `udevadm trigger --name-match=kvm` so
 the rule applies to the existing device node. When that succeeds, QEMU
 runs with KVM and `test-mesh-qemu` drops from ~6-8 min to ~2-3 min.
 
-[kvm]: https://github.com/fcefyn-testbed/lime-packages/blob/master/tools/ci/enable_kvm.sh
+[kvm]: https://github.com/libremesh/lime-packages/blob/master/tools/ci/enable_kvm.sh
 
 ### lime-packages#1180 (default channel 48 / 6 GHz)
 

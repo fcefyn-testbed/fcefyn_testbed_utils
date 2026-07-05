@@ -1,6 +1,6 @@
 # Lab architecture {: #lab-architecture }
 
-Technical design of the FCEFyN HIL testbed: per-lab `labgrid-coordinator` (loopback) + SSH gateway VM shared with the openwrt-tests ecosystem, DUTs available for both [openwrt-tests](https://github.com/aparcar/openwrt-tests) and [libremesh-tests](https://github.com/fcefyn-testbed/libremesh-tests), and dynamic VLAN as a per-test attribute.
+Technical design of the FCEFyN HIL testbed: per-lab `labgrid-coordinator` (loopback) + SSH gateway VM shared with the openwrt-tests ecosystem, DUTs available for both [openwrt-tests](https://github.com/aparcar/openwrt-tests) and [libremesh-tests](https://github.com/libremesh/libremesh-tests), and dynamic VLAN as a per-test attribute.
 
 ![Full testbed architecture](../img/diagrams/full_design.png)
 
@@ -149,7 +149,7 @@ For state-machine level detail of `UBootTFTPStrategy`, mesh subprocess boot (`me
 | Repo | Responsibility |
 |---|---|
 | **openwrt-tests** (upstream) | Vanilla OpenWrt tests, single and multi-node |
-| **libremesh-tests** (fork) | LibreMesh-specific tests, mesh multi-node |
+| **libremesh-tests** | LibreMesh-specific tests, mesh multi-node |
 | **fcefyn_testbed_utils** | Lab infrastructure, Ansible, scripts |
 | **labgrid-switch-abstraction** | Vendor-agnostic switch management (VLAN, PoE) |
 
