@@ -144,7 +144,7 @@ switch-vlan belkin_rt3200_1 200       # move to mesh
 switch-vlan belkin_rt3200_1 --restore  # restore isolated
 ```
 
-Labgrid locking ensures mutual exclusion per DUT. See [Lab architecture](../diseno/lab-architecture.md).
+Labgrid locking ensures mutual exclusion per DUT. Switch SSH uses `/tmp/switch.lock`: [Switch SSH lock](switch-config.md#switch-lock). See [Lab architecture](../diseno/lab-architecture.md).
 
 ### 3.3 Installation
 

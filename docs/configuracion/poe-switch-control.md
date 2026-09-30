@@ -58,9 +58,9 @@ See [switch config](switch-config.md#ssh-access) for the SSH alias setup.
 ## 4. Lock serialization
 
 Multiple PDUDaemon workers or manual invocations can run concurrently.
-The script uses `fcntl.flock` on `/tmp/switch.lock` to serialize SSH
-sessions and prevent contention on the switch's SSH daemon
-(which handles only one session at a time reliably).
+The script uses `SwitchClient` (`fcntl.flock` on `/tmp/switch.lock`) to serialize SSH
+sessions. Same file as `switch-vlan` and `labgrid-dut-proxy`. Details:
+[Switch SSH lock](switch-config.md#switch-lock).
 
 ---
 
@@ -97,7 +97,7 @@ resources:
 | `Connection refused` | Switch SSH not enabled or wrong IP | Verify `ssh switch-fcefyn` works manually |
 | `Invalid PoE port` | Port number > 8 or non-integer | Only ports 1–8 support PoE on SG2016P |
 | PoE on command succeeds but DUT stays off | Splitter issue (port 2 / LibreRouter) | Check 48 V→12 V splitter connection |
-| Lock timeout | Another process holding `/tmp/switch.lock` | `rm /tmp/switch.lock` if the process is gone |
+| Lock timeout | Another process holding `/tmp/switch.lock` | [Switch SSH lock](switch-config.md#switch-lock). Do not `rm` the file while a holder is alive; `autossh` respawns `labgrid-dut-proxy`. |
 
 ---
 

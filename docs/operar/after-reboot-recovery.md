@@ -151,6 +151,14 @@ sudo systemctl start arduino-relay-daemon
 
 After a hard power cut, the switch may **look** factory-reset (default IP `192.168.0.1`, flat VLAN 1) even when the hardware did not reset: TP-Link JetStream keeps CLI changes in RAM until `copy running-config startup-config`. See [Observed failure](../configuracion/switch-config.md#config-persistence). Current `switch-vlan` saves to flash automatically after each change.
 
+After a host reboot, `/tmp` is recreated. Confirm the switch SSH lock is world-writable ([Switch SSH lock](../configuracion/switch-config.md#switch-lock)):
+
+```sh
+ls -la /tmp/switch.lock
+# expected: -rw-rw-rw-
+sudo systemd-tmpfiles --create   # if missing or not world-writable
+```
+
 If the switch still shows defaults, recovery procedure:
 
 1. Disconnect all DUT cables from the switch, leave only gateway and laptop connected (avoids `192.168.1.1` conflicts on flat VLAN 1).

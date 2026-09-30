@@ -51,7 +51,9 @@ switch-vlan belkin_rt3200_1 200
 switch-vlan belkin_rt3200_1 --restore
 ```
 
-In CI, VLAN changes run inside the libremesh-tests pytest fixture (no manual step). DUT/switch port database (`duts:` section): see [DUTs config](../configuracion/duts-config.md).
+In CI, VLAN changes run inside the libremesh-tests pytest fixture (no manual step). Cancelled GitHub Actions jobs skip fixture teardown: DUT ports can stay on VLAN 200. Restore with `switch-vlan --restore-all`. If that times out on the lock, see [Switch SSH lock](../configuracion/switch-config.md#switch-lock).
+
+DUT/switch port database (`duts:` section): see [DUTs config](../configuracion/duts-config.md).
 
 ### Switch state tracking
 

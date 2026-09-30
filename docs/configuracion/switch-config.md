@@ -205,24 +205,98 @@ ln -s /etc/switch.conf ~/.config/switch.conf
 
 Group changes only apply to **new** sessions: log out and SSH in again so the `labgrid` group is loaded (verify with `id`). Existing sessions keep the old group set.
 
-The shared lock file `/tmp/switch.lock` (used to serialize SSH sessions to the switch) must also be group-writable so any user in `labgrid` can acquire it:
-
-```bash
-sudo rm -f /tmp/switch.lock
-sudo install -m 0664 -g labgrid /dev/null /tmp/switch.lock
-
-# Persist across reboots (systemd-tmpfiles recreates /tmp at boot)
-sudo tee /etc/tmpfiles.d/switch-lock.conf >/dev/null <<'EOF'
-f /tmp/switch.lock 0664 root labgrid -
-EOF
-sudo systemd-tmpfiles --create
-```
+Shared lock file setup: [Switch SSH lock](#switch-lock).
 
 Verify from a remote machine (no local switch credentials needed):
 
 ```bash
 ssh <lab-host> 'whoami; ls -la /etc/switch.conf /tmp/switch.lock; switch-vlan --help'
 ```
+
+#### Switch SSH lock (`/tmp/switch.lock`) {: #switch-lock }
+
+All switch SSH (VLAN changes, PoE, PVID queries) takes an exclusive `fcntl.flock` on `/tmp/switch.lock`. TP-Link JetStream does not tolerate concurrent SSH sessions.
+
+```mermaid
+flowchart LR
+  vlan["switch-vlan"]
+  poe["poe_switch_control.py<br/>PDUDaemon root"]
+  proxy["labgrid-dut-proxy<br/>PVID query"]
+  lock["/tmp/switch.lock"]
+  vlan --> lock
+  poe --> lock
+  proxy --> lock
+```
+
+##### Observed failures
+
+| Symptom | Cause |
+|---------|--------|
+| `PermissionError: [Errno 13] Permission denied: '/tmp/switch.lock'` then `Operation not permitted` on `chmod` | File created by root with mode `0644`. `os.open(..., 0o666)` is masked by umask `0o022`. Sticky-bit `/tmp`: only the owner or root can `chmod` or delete. |
+| `Timed out after 60.0s waiting for switch lock` | Another process holds `LOCK_EX`. Typical: six `dut-metrics-tunnel-*.service` units reconnect at once; each `labgrid-dut-proxy` calls `get_port_pvid()` and waits 60s. Serial queue ~90-120s, so `switch-vlan --restore-all` never enters. Killing proxies does not help: `autossh` respawns them. |
+| Mesh CI: `VLAN switch to 200 failed` | Same lock errors, seen by pytest via SSH `switch-vlan`. |
+
+`flock -n /tmp/switch.lock` with no command prints `bad file descriptor`. Probe with:
+
+```bash
+flock -n /tmp/switch.lock echo "lock is FREE"
+```
+
+Holder:
+
+```bash
+sudo fuser -v /tmp/switch.lock
+```
+
+##### Permissions on the host
+
+`labgrid-switch-abstraction` `SwitchClient._open_lock_file` creates the file then `os.fchmod(fd, 0o666)` so umask cannot leave `0644`. PDUDaemon still creates the file first on a cold `/tmp`; tmpfiles must pre-create it.
+
+On `labgrid-fcefyn`:
+
+```text
+/etc/tmpfiles.d/switch-lock.conf
+f /tmp/switch.lock 0666 root root -
+```
+
+Apply and verify:
+
+```bash
+sudo systemd-tmpfiles --create
+ls -la /tmp/switch.lock
+# expected: -rw-rw-rw- 1 root root
+```
+
+Do not `sudo rm /tmp/switch.lock` as a routine fix: the next root PoE command recreates `0644` until tmpfiles or `fchmod` run. Prefer `sudo chmod 666 /tmp/switch.lock` while the inode exists.
+
+##### Metrics tunnels must not wait
+
+SSH aliases use `ProxyCommand sudo labgrid-dut-proxy ...`. `sudo` strips systemd `Environment=`, so `SWITCH_LOCK_TIMEOUT=0` on `dut-metrics-tunnel-*.service` has no effect.
+
+The script `/usr/local/sbin/labgrid-dut-proxy` (source: `scripts/labgrid-dut-proxy`) sets `os.environ.setdefault("SWITCH_LOCK_TIMEOUT", "0")`. If the lock is busy, `get_port_pvid()` returns `None` and the proxy falls back to the isolated VLAN (correct for Prometheus forwards).
+
+Confirm:
+
+```bash
+grep SWITCH_LOCK_TIMEOUT /usr/local/sbin/labgrid-dut-proxy
+```
+
+Redeploy: copy `scripts/labgrid-dut-proxy` to `/usr/local/sbin/labgrid-dut-proxy` (`0755`).
+
+##### Recovery (no CI on the switch)
+
+Stopping tunnels without stopping the units causes an immediate respawn loop. Order:
+
+```bash
+sudo systemctl stop dut-metrics-tunnel-{bananapi,belkin-1,belkin-2,belkin-3,librerouter-1,openwrt-one}.service
+sudo pkill -f labgrid-dut-proxy
+flock -n /tmp/switch.lock echo "lock is FREE"
+switch-vlan --restore-all
+sudo systemctl start dut-metrics-tunnel-{bananapi,belkin-1,belkin-2,belkin-3,librerouter-1,openwrt-one}.service
+sleep 10 && flock -n /tmp/switch.lock echo "lock is FREE"
+```
+
+Do not run this while lime-packages mesh jobs are in progress.
 
 !!! note "PoE and concurrent SSH sessions"
     PDUDaemon may invoke several `poe_switch_control.py` in parallel (multiple PoE DUTs). TP-Link firmware **does not reliably tolerate** concurrent SSH sessions (timeouts). The script serializes access with a lock (`/tmp/switch.lock`, `fcntl.flock`); background calls queue.

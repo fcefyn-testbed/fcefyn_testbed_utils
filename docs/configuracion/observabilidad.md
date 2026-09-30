@@ -39,7 +39,7 @@ flowchart LR
   Prom --> Graf
 ```
 
-Prometheus only talks to **127.0.0.1** on the host; the DUT IP on the VLAN is resolved via SSH + `labgrid-bound-connect` (static isolated VLAN per DUT). If the DUT VLAN changes briefly during tests, the session drops and **`autossh`** brings the forward back up.
+Prometheus only talks to **127.0.0.1** on the host; DUT SSH aliases use `labgrid-dut-proxy` (PVID query) then `labgrid-bound-connect`. The proxy must not wait on `/tmp/switch.lock` (`SWITCH_LOCK_TIMEOUT=0` inside the script; `sudo` strips unit `Environment=`). See [Switch SSH lock](switch-config.md#switch-lock). If the DUT VLAN changes during tests, the session drops and **`autossh`** brings the forward back up.
 
 ---
 

@@ -85,6 +85,14 @@ The runner must connect as the `labgrid-dev` user. Check `LG_PROXY` is set and t
 
 ---
 
+## Switch lock (`/tmp/switch.lock`)
+
+Symptoms: `Permission denied: '/tmp/switch.lock'`, `Timed out after 60.0s waiting for switch lock`, mesh pytest `VLAN switch to 200 failed`.
+
+Canonical procedure, causes, and host files: [Switch SSH lock](../configuracion/switch-config.md#switch-lock).
+
+---
+
 ## Virtual mesh (QEMU) issues
 
 ### `batctl n` shows no neighbors after VMs start

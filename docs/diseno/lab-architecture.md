@@ -136,7 +136,7 @@ switch-vlan belkin_rt3200_1 --restore  # restore isolated
 switch-vlan --restore-all              # restore all DUTs
 ```
 
-The primitive already exists on the driver interface (`assign_port_vlan_commands(port, vlan_id, mode, remove_vlans)`); the CLI adds DUT-name resolution and an `flock` to serialize concurrent runs (`/tmp/switch.lock`).
+The primitive already exists on the driver interface (`assign_port_vlan_commands(port, vlan_id, mode, remove_vlans)`); the CLI adds DUT-name resolution and an `flock` to serialize concurrent runs (`/tmp/switch.lock`). Host lock file, permissions, and metrics-tunnel timeout: [Switch SSH lock](../configuracion/switch-config.md#switch-lock).
 
 ### Pytest fixture (libremesh-tests)
 

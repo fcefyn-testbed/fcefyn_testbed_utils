@@ -55,6 +55,9 @@ Key terms used across the FCEFyN testbed documentation.
 **labgrid-bound-connect**
 : A script that acts as an SSH ProxyCommand. It uses `socat` to bind a TCP connection to a specific VLAN interface on the lab host, routing SSH traffic to the correct DUT.
 
+**labgrid-dut-proxy**
+: SSH ProxyCommand on the lab host (`/usr/local/sbin/labgrid-dut-proxy`). Queries the switch PVID, then `exec`s `labgrid-bound-connect`. Invoked via `sudo`, so it sets `SWITCH_LOCK_TIMEOUT=0` itself and must not wait on `/tmp/switch.lock`. See [Switch SSH lock](configuracion/switch-config.md#switch-lock).
+
 **LibreMesh**
 : An OpenWrt-based firmware distribution for community mesh networks. Includes batman-adv, babeld, shared-state, and other mesh networking components. The primary firmware under test in this lab.
 
@@ -111,6 +114,9 @@ Key terms used across the FCEFyN testbed documentation.
 
 **shared-state**
 : A LibreMesh subsystem that synchronizes structured data (e.g. hostname→MAC mappings) between mesh nodes. Tests verify that data written on one node propagates to others.
+
+**switch.lock**
+: File `/tmp/switch.lock`. Exclusive `flock` serializing SSH to the TP-Link switch (`switch-vlan`, PoE, PVID queries). World-writable (`0666`) via tmpfiles.d. See [Switch SSH lock](configuracion/switch-config.md#switch-lock).
 
 **sysupgrade**
 : OpenWrt utility to flash a new image, optionally preserving UCI config (or wiping it with `-n`). **Not used in CI tests**: images are loaded into RAM via TFTP (initramfs), the flash is never written, so the DUT comes back to the same state after every test.

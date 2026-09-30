@@ -277,9 +277,7 @@ arduino_relay_control.py on 0 --glinet-sequence
 
 ### Lock serialization
 
-`arduino_relay_control.py` uses `fcntl.flock` on `/tmp/switch.lock` to
-serialize access when multiple callers (PDUDaemon workers, manual commands)
-run concurrently. The lock is released after each command completes.
+`arduino_relay_control.py` uses `fcntl.flock` on `/tmp/switch.lock` (same file as switch SSH). See [Switch SSH lock](switch-config.md#switch-lock).
 
 ---
 

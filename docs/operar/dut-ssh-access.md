@@ -6,17 +6,15 @@ How `ssh dut-X` reaches each DUT through its isolated VLAN, and how to connect m
 
 ## Static ProxyCommand
 
-Each DUT SSH alias in `~/.ssh/config` uses a static `ProxyCommand` that binds to the DUT's **isolated VLAN interface** via `labgrid-bound-connect`:
+Each DUT SSH alias in `~/.ssh/config` uses `labgrid-dut-proxy`, which queries the switch PVID then `exec`s `labgrid-bound-connect` on `vlan<PVID>`. Template: `configs/templates/ssh_config_fcefyn`.
 
 ```
 Host dut-belkin-1
     User root
-    ProxyCommand sudo labgrid-bound-connect vlan100 192.168.1.1 22
+    ProxyCommand sudo labgrid-dut-proxy belkin-1 192.168.1.1 22
 ```
 
-`labgrid-bound-connect` uses `socat` with `SO_BINDTODEVICE` to force traffic through the correct VLAN interface. Since all DUTs share `192.168.1.1` on their isolated VLAN, binding to the interface is what distinguishes them.
-
-The full SSH config template is in `configs/templates/ssh_config_fcefyn`.
+`labgrid-bound-connect` uses `socat` with `SO_BINDTODEVICE`. Isolated DUTs all use `192.168.1.1`; the interface is what distinguishes them. The proxy must not block on `/tmp/switch.lock`: [Switch SSH lock](../configuracion/switch-config.md#switch-lock).
 
 ---
 
@@ -37,7 +35,7 @@ sequenceDiagram
 ```
 
 - **openwrt-tests**: VLANs never change. DUTs always on isolated VLANs.
-- **libremesh-tests**: `conftest_vlan.py` moves ports to VLAN 200 at test start and **always restores** on teardown (even with `LG_MESH_KEEP_POWERED=1`, which only skips power-off).
+- **libremesh-tests**: `conftest_vlan.py` moves ports to VLAN 200 at test start and restores on teardown. A **cancelled** CI job skips teardown; run `switch-vlan --restore-all` on the host.
 - **Tests use their own SSH path** (`SSHProxy` with hardcoded `vlan200`), not the `~/.ssh/config` aliases.
 - **SSH transport retry**: `SSHProxy` automatically retries up to 3 times on exit code 255 (TCP/SSH transport errors). These are common during batman-adv/babeld convergence right after boot.
 - **IP watchdog**: After boot, a background script on each DUT re-applies the fixed mesh SSH IP every 3 seconds for 300 seconds, targeting `br-lan` when UP. This survives network restarts triggered by OpenWrt init scripts or batman-adv configuration.
